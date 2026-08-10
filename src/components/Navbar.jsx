@@ -2,14 +2,16 @@ import { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../lib/AuthContext';
+import { useSetup } from './ProtectedRoute';
 
-const navLinks = [
-  { to: '/dashboard', key: 'nav_dashboard' },
-  { to: '/tracker', key: 'nav_tracker' },
-  { to: '/diet', key: 'nav_diet' },
-  { to: '/education', key: 'nav_education' },
-  { to: '/community', key: 'nav_community' },
-  { to: '/settings', key: 'nav_settings' },
+// Full set of feature links — only rendered when the user is fully set up.
+const featureLinks = [
+  { to: '/dashboard',  key: 'nav_dashboard'  },
+  { to: '/tracker',    key: 'nav_tracker'    },
+  { to: '/diet',       key: 'nav_diet'       },
+  { to: '/education',  key: 'nav_education'  },
+  { to: '/community',  key: 'nav_community'  },
+  { to: '/settings',   key: 'nav_settings'   },
 ];
 
 export default function Navbar() {
@@ -17,6 +19,17 @@ export default function Navbar() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // useSetup reads from SetupContext; returns { isFullySetUp: false } when
+  // no ProtectedRoute is in the tree (i.e. we are on a public page).
+  let setupCtx = { isFullySetUp: false };
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    setupCtx = useSetup();
+  } catch {
+    // Public route — SetupContext is not provided, keep default.
+  }
+  const { isFullySetUp } = setupCtx;
 
   const currentLang = i18n.language;
 
@@ -41,20 +54,26 @@ export default function Navbar() {
     <nav className="bg-background/80 backdrop-blur-md border-b border-primary/15 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14">
+
           {/* ── Logo ── */}
-          <Link to="/" className="font-heading text-xl font-bold text-accent hover:text-accent/80 transition-colors flex items-center gap-1.5 shrink-0">
+          <Link
+            to={isFullySetUp ? '/dashboard' : '/'}
+            className="font-heading text-xl font-bold text-accent hover:text-accent/80 transition-colors flex items-center gap-1.5 shrink-0"
+          >
             <span className="w-2 h-2 rounded-full bg-primary inline-block" />
             {t('app_name')} <span className="text-primary/60 font-normal text-lg">सखी</span>
           </Link>
 
-          {/* ── Center Nav Links (desktop) ── */}
-          <div className="hidden md:flex items-center gap-6">
-            {navLinks.map(({ to, key }) => (
-              <NavLink key={to} to={to} className={activeLinkClass}>
-                {t(key)}
-              </NavLink>
-            ))}
-          </div>
+          {/* ── Center Nav Links — only when fully set up ── */}
+          {isFullySetUp && (
+            <div className="hidden md:flex items-center gap-6">
+              {featureLinks.map(({ to, key }) => (
+                <NavLink key={to} to={to} className={activeLinkClass}>
+                  {t(key)}
+                </NavLink>
+              ))}
+            </div>
+          )}
 
           {/* ── Right side ── */}
           <div className="flex items-center gap-2">
@@ -82,7 +101,7 @@ export default function Navbar() {
               </button>
             </div>
 
-            {/* Auth */}
+            {/* Auth: Sign In or Log Out */}
             {user ? (
               <button
                 onClick={handleLogout}
@@ -101,27 +120,29 @@ export default function Navbar() {
               </Link>
             )}
 
-            {/* Mobile hamburger */}
-            <button
-              onClick={() => setMobileOpen(!mobileOpen)}
-              className="md:hidden p-1.5 rounded-lg hover:bg-text/5 transition-colors cursor-pointer"
-              aria-label="Toggle menu"
-            >
-              <svg className="w-5 h-5 text-text/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                {mobileOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-                )}
-              </svg>
-            </button>
+            {/* Mobile hamburger — only meaningful when fully set up */}
+            {isFullySetUp && (
+              <button
+                onClick={() => setMobileOpen(!mobileOpen)}
+                className="md:hidden p-1.5 rounded-lg hover:bg-text/5 transition-colors cursor-pointer"
+                aria-label="Toggle menu"
+              >
+                <svg className="w-5 h-5 text-text/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  {mobileOpen ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                  )}
+                </svg>
+              </button>
+            )}
           </div>
         </div>
 
         {/* ── Mobile Nav ── */}
-        {mobileOpen && (
+        {isFullySetUp && mobileOpen && (
           <div className="md:hidden pb-4 pt-2 border-t border-text/10 space-y-1">
-            {navLinks.map(({ to, key }) => (
+            {featureLinks.map(({ to, key }) => (
               <NavLink
                 key={to}
                 to={to}
