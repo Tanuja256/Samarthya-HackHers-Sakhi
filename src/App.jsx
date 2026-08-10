@@ -1,6 +1,8 @@
 import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Landing from './pages/Landing';
+import Login from './pages/auth/Login';
+import Signup from './pages/auth/Signup';
 import Screening from './pages/screening/Screening';
 import Tracker from './pages/tracker/Tracker';
 import VoiceLog from './pages/voice-log/VoiceLog';
@@ -23,6 +25,9 @@ export default function App() {
       <main>
         <Routes>
           <Route path="/" element={<Landing />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/screening" element={<Screening />} />
           <Route path="/tracker" element={<Tracker />} />
           <Route path="/voice-log" element={<VoiceLog />} />
@@ -35,7 +40,6 @@ export default function App() {
           <Route path="/education" element={<Education />} />
           <Route path="/family-explainer" element={<FamilyExplainer />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
       </main>
