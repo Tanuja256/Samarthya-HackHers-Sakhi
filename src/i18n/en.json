@@ -186,5 +186,22 @@
   "settings_delete_desc": "Permanently delete your account and all associated data. This cannot be undone.",
   "settings_delete_button": "Delete Account",
   "settings_saved": "Settings saved!",
-  "settings_save_button": "Save Changes"
+  "settings_save_button": "Save Changes",
+
+  "diet_title": "Diet & Family Plate",
+  "diet_subtitle": "A weekly meal plan built around what's actually available in your kitchen — jowar, bajra, local greens.",
+  "diet_plan_info": "This plan uses regional Maharashtrian staples — millets, leafy greens, dals, and curd. These are naturally PCOS-friendly: high fiber, low glycemic, and rich in the nutrients your body needs. Adjust portions to your appetite.",
+  "diet_plan_tip": "Consistency matters more than perfection. Following this plan 5 out of 7 days is still a big win. On the other days, use the Family Plate tool below.",
+  "diet_plate_title": "What's cooking at home today?",
+  "diet_plate_subtitle": "Select the dishes your family is actually making. Sakhi will give you one small, practical tweak — not a whole new menu.",
+  "diet_disclaimer": "Sakhi provides general nutritional guidance, not medical diet plans. Always consult a doctor or registered dietitian for personalized advice.",
+
+  "festival_title": "Festival Mode",
+  "festival_subtitle": "Enjoy every festival fully — with a few small tricks to keep your body happy too.",
+  "festival_disclaimer": "These are general wellness tips for festival eating, not medical dietary restrictions. Celebrate with your family — food is love, and love is good for you.",
+
+  "lab_title": "Lab Report Translator",
+  "lab_subtitle": "Turn confusing lab numbers into words you actually understand.",
+  "lab_disclaimer": "This tool is educational, not diagnostic. It helps you understand lab values and prepare questions for your doctor — it does not replace a medical consultation.",
+  "lab_disclaimer_2": "Always share your original lab report with your doctor for accurate interpretation."
 }
