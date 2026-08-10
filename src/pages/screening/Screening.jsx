@@ -333,13 +333,13 @@ function ResultScreen({ tier, totalScore, onRetake }) {
 
             <button
               type="button"
-              id="screening-go-tracker-btn"
-              onClick={() => navigate('/tracker')}
+              id="screening-go-dashboard-btn"
+              onClick={() => navigate('/dashboard')}
               className="w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-[var(--radius-button)]
                          bg-secondary/15 text-secondary font-semibold hover:bg-secondary/25 active:scale-[0.98]
                          transition-all duration-200 cursor-pointer text-sm border border-secondary/25"
             >
-              Start tracking your symptoms
+              Continue to Dashboard
             </button>
 
             <button

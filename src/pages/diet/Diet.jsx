@@ -68,19 +68,19 @@ const WEEKLY_PLAN = [
 
 const MorningIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text/60 mt-0.5 shrink-0">
-    <path d="M5 11h14v1a6 6 0 0 1-6 6H11a6 6 0 0 1-6-6v-1Z"/><path d="M19 11v1a2 2 0 0 1-2 2"/><path d="M9 3v4"/><path d="M15 3v4"/><path d="M12 3v4"/>
+    <path d="M5 11h14v1a6 6 0 0 1-6 6H11a6 6 0 0 1-6-6v-1Z" /><path d="M19 11v1a2 2 0 0 1-2 2" /><path d="M9 3v4" /><path d="M15 3v4" /><path d="M12 3v4" />
   </svg>
 );
 
 const SunIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text/60 mt-0.5 shrink-0">
-    <circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+    <circle cx="12" cy="12" r="4" /><path d="M12 2v2" /><path d="M12 20v2" /><path d="m4.93 4.93 1.41 1.41" /><path d="m17.66 17.66 1.41 1.41" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" />
   </svg>
 );
 
 const MoonIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text/60 mt-0.5 shrink-0">
-    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
   </svg>
 );
 
@@ -90,16 +90,16 @@ const MEAL_ICONS = [MorningIcon, SunIcon, MoonIcon];
    FAMILY-PLATE GUIDANCE
    ══════════════════════════════════════════════════════════════════ */
 const DISH_OPTIONS = [
-  { id: 'dal',    label: 'Dal' },
-  { id: 'rice',   label: 'Rice' },
-  { id: 'roti',   label: 'Roti / Chapati' },
+  { id: 'dal', label: 'Dal' },
+  { id: 'rice', label: 'Rice' },
+  { id: 'roti', label: 'Roti / Chapati' },
   { id: 'bhakri', label: 'Jowar bhakri' },
-  { id: 'sabzi',  label: 'Sabzi' },
-  { id: 'curd',   label: 'Curd / Dahi' },
+  { id: 'sabzi', label: 'Sabzi' },
+  { id: 'curd', label: 'Curd / Dahi' },
   { id: 'pickle', label: 'Pickle' },
-  { id: 'fried',  label: 'Fried item' },
-  { id: 'sweet',  label: 'Sweet' },
-  { id: 'salad',  label: 'Salad' },
+  { id: 'fried', label: 'Fried item' },
+  { id: 'sweet', label: 'Sweet' },
+  { id: 'salad', label: 'Salad' },
 ];
 
 const FALLBACK_TIPS = [
@@ -113,7 +113,7 @@ const FALLBACK_TIPS = [
 export default function Diet() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  
+
   const [selectedDishes, setSelectedDishes] = useState([]);
   const [tweakResult, setTweakResult] = useState('');
   const [tweakLoading, setTweakLoading] = useState(false);
@@ -184,7 +184,7 @@ Give ONE short, practical, friendly tweak (1-2 lines max) to make this meal more
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-10">
-      
+
       {/* ── Page Header ── */}
       <h1 className="font-heading text-3xl font-bold text-text mb-2">
         Eating well, without a separate kitchen
@@ -198,7 +198,7 @@ Give ONE short, practical, friendly tweak (1-2 lines max) to make this meal more
         <div className="inline-block bg-[#f5e3df] text-[#b87c71] text-[11px] font-bold px-2.5 py-0.5 rounded-md uppercase tracking-wider mb-5">
           Family plate
         </div>
-        
+
         <h2 className="font-heading text-xl font-bold text-text mb-2">
           What's cooking at home today?
         </h2>

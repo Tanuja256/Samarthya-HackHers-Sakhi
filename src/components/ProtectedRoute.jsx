@@ -39,6 +39,10 @@ export default function ProtectedRoute({ children }) {
     // Wait until auth has resolved
     if (authLoading) return;
 
+    // Reset state when path changes in case component is not unmounted
+    setChecking(true);
+    setRedirect(null);
+
     // No session → send to login
     if (!user) {
       setRedirect('/login');

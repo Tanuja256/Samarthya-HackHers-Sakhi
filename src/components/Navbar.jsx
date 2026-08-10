@@ -6,12 +6,12 @@ import { useSetup } from './ProtectedRoute';
 
 // Full set of feature links — only rendered when the user is fully set up.
 const featureLinks = [
-  { to: '/dashboard',  key: 'nav_dashboard'  },
-  { to: '/tracker',    key: 'nav_tracker'    },
-  { to: '/diet',       key: 'nav_diet'       },
-  { to: '/education',  key: 'nav_education'  },
-  { to: '/community',  key: 'nav_community'  },
-  { to: '/settings',   key: 'nav_settings'   },
+  { to: '/dashboard', key: 'nav_dashboard' },
+  { to: '/tracker', key: 'nav_tracker' },
+  { to: '/diet', key: 'nav_diet' },
+  { to: '/education', key: 'nav_education' },
+  { to: '/community', key: 'nav_community' },
+  { to: '/settings', key: 'nav_settings' },
 ];
 
 export default function Navbar() {
@@ -44,10 +44,9 @@ export default function Navbar() {
   };
 
   const activeLinkClass = ({ isActive }) =>
-    `text-sm font-medium transition-colors ${
-      isActive
-        ? 'text-accent border-b-2 border-accent pb-0.5'
-        : 'text-text/60 hover:text-text'
+    `text-sm font-medium transition-colors ${isActive
+      ? 'text-accent border-b-2 border-accent pb-0.5'
+      : 'text-text/60 hover:text-text'
     }`;
 
   return (
@@ -81,21 +80,19 @@ export default function Navbar() {
             <div className="flex items-center bg-text/5 rounded-full p-0.5 gap-0.5">
               <button
                 onClick={() => setLanguage('en')}
-                className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-                  currentLang === 'en'
+                className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${currentLang === 'en'
                     ? 'bg-white text-accent shadow-sm'
                     : 'text-text/50 hover:text-text/70'
-                }`}
+                  }`}
               >
                 EN
               </button>
               <button
                 onClick={() => setLanguage('mr')}
-                className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-                  currentLang === 'mr'
+                className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${currentLang === 'mr'
                     ? 'bg-white text-accent shadow-sm'
                     : 'text-text/50 hover:text-text/70'
-                }`}
+                  }`}
               >
                 मराठी
               </button>
@@ -148,8 +145,7 @@ export default function Navbar() {
                 to={to}
                 onClick={() => setMobileOpen(false)}
                 className={({ isActive }) =>
-                  `block px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    isActive ? 'bg-primary/10 text-accent' : 'text-text/60 hover:bg-text/5'
+                  `block px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive ? 'bg-primary/10 text-accent' : 'text-text/60 hover:bg-text/5'
                   }`
                 }
               >

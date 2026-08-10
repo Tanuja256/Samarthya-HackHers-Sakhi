@@ -8,9 +8,8 @@ import Signup from './pages/auth/Signup';
 import FamilyExplainer from './pages/family-explainer/FamilyExplainer';
 
 import Onboarding from './pages/onboarding/Onboarding';
-import Screening from './pages/screening/Screening';
-import Dashboard from './pages/dashboard/Dashboard';
 import Screening, { VideoSummaryPlaceholder } from './pages/screening/Screening';
+import Dashboard from './pages/dashboard/Dashboard';
 import Tracker from './pages/tracker/Tracker';
 import VoiceLog from './pages/voice-log/VoiceLog';
 import Detective from './pages/detective/Detective';
@@ -33,18 +32,6 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           {/* Intentionally public — shareable with family members */}
-          <Route path="/onboarding" element={<Onboarding />} />
-          <Route path="/screening" element={<Screening />} />
-          <Route path="/screening/video-summary" element={<VideoSummaryPlaceholder />} />
-          <Route path="/tracker" element={<Tracker />} />
-          <Route path="/voice-log" element={<VoiceLog />} />
-          <Route path="/detective" element={<Detective />} />
-          <Route path="/diet" element={<Diet />} />
-          <Route path="/festival" element={<Festival />} />
-          <Route path="/lab-report" element={<LabReport />} />
-          <Route path="/timeline" element={<Timeline />} />
-          <Route path="/community" element={<Community />} />
-          <Route path="/education" element={<Education />} />
           <Route path="/family-explainer" element={<FamilyExplainer />} />
 
           {/* ── Protected routes — require a logged-in session ── */}
@@ -63,6 +50,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Screening />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/screening/video-summary"
+            element={
+              <ProtectedRoute>
+                <VideoSummaryPlaceholder />
               </ProtectedRoute>
             }
           />

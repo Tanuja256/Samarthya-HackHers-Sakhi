@@ -18,21 +18,21 @@ const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'S
 
 /* Symptom chips — keys written to symptom_logs.symptom */
 const SYMPTOM_CHIPS = [
-  { label: 'Acne',       key: 'acne' },
+  { label: 'Acne', key: 'acne' },
   { label: 'Low energy', key: 'low_energy' },
-  { label: 'Hair fall',  key: 'hair_fall' },
-  { label: 'Cramps',     key: 'cramps' },
-  { label: 'Mood dips',  key: 'mood_dips' },
-  { label: 'Cravings',   key: 'cravings' },
-  { label: 'Bloating',   key: 'bloating' },
+  { label: 'Hair fall', key: 'hair_fall' },
+  { label: 'Cramps', key: 'cramps' },
+  { label: 'Mood dips', key: 'mood_dips' },
+  { label: 'Cravings', key: 'cravings' },
+  { label: 'Bloating', key: 'bloating' },
   { label: 'Poor sleep', key: 'poor_sleep' },
 ];
 
 /* Severity — label shown to user; value stored in symptom_logs.severity (1–5) */
 const SEVERITY_OPTIONS = [
-  { label: 'Mild',     value: 2 },
+  { label: 'Mild', value: 2 },
   { label: 'Moderate', value: 3 },
-  { label: 'Strong',   value: 5 },
+  { label: 'Strong', value: 5 },
 ];
 
 /* ═══════════════════════════════════════════════════════════
@@ -65,12 +65,12 @@ const SEED_CYCLE_DATA = [
 ];
 
 const SEED_SYMPTOM_DATA = [
-  { name: 'Acne',       count: 12 },
+  { name: 'Acne', count: 12 },
   { name: 'Low energy', count: 20 },
-  { name: 'Hair fall',  count: 8  },
-  { name: 'Cramps',     count: 10 },
-  { name: 'Mood dips',  count: 13 },
-  { name: 'Cravings',   count: 18 },
+  { name: 'Hair fall', count: 8 },
+  { name: 'Cramps', count: 10 },
+  { name: 'Mood dips', count: 13 },
+  { name: 'Cravings', count: 18 },
 ];
 
 /* ═══════════════════════════════════════════════════════════
@@ -111,10 +111,10 @@ async function getOrCreateUserId(authUser) {
    CALENDAR GRID COMPONENT
 ═══════════════════════════════════════════════════════════ */
 function CalendarGrid({ year, month, selectedDate, periodDates, symptomDates, onSelectDate, onPrevMonth, onNextMonth }) {
-  const daysInMonth  = new Date(year, month + 1, 0).getDate();
-  const firstDaySun  = new Date(year, month, 1).getDay();   // 0 = Sun
-  const firstDayMon  = (firstDaySun + 6) % 7;               // convert to Mon-first: Mon=0, Sun=6
-  const today        = todayStr();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDaySun = new Date(year, month, 1).getDay();   // 0 = Sun
+  const firstDayMon = (firstDaySun + 6) % 7;               // convert to Mon-first: Mon=0, Sun=6
+  const today = todayStr();
 
   // Build cell array: null for padding cells, number for real days
   const cells = [
@@ -181,11 +181,11 @@ function CalendarGrid({ year, month, selectedDate, periodDates, symptomDates, on
         {cells.map((day, i) => {
           if (!day) return <div key={`pad-${i}`} className="h-10" />;
 
-          const dStr       = ds(day);
-          const hasPeriod  = periodDates.has(dStr);
+          const dStr = ds(day);
+          const hasPeriod = periodDates.has(dStr);
           const hasSymptom = symptomDates.has(dStr);
           const isSelected = selectedDate === dStr;
-          const isToday    = dStr === today;
+          const isToday = dStr === today;
 
           return (
             <button
@@ -198,14 +198,14 @@ function CalendarGrid({ year, month, selectedDate, periodDates, symptomDates, on
                 isSelected
                   ? 'border-2 border-accent text-accent font-semibold bg-accent/5'
                   : isToday
-                  ? 'text-primary font-semibold hover:bg-primary/8'
-                  : 'text-text/65 hover:bg-text/5',
+                    ? 'text-primary font-semibold hover:bg-primary/8'
+                    : 'text-text/65 hover:bg-text/5',
               ].join(' ')}
             >
               <span className="leading-none">{day}</span>
               {/* Dots row — always rendered at fixed height so cells align */}
               <span className="h-2 flex items-center gap-0.5 mt-0.5">
-                {hasPeriod  && <span className="w-1.5 h-1.5 rounded-full bg-primary  block" />}
+                {hasPeriod && <span className="w-1.5 h-1.5 rounded-full bg-primary  block" />}
                 {hasSymptom && <span className="w-1.5 h-1.5 rounded-full bg-secondary block" />}
               </span>
             </button>
@@ -222,10 +222,10 @@ function CalendarGrid({ year, month, selectedDate, periodDates, symptomDates, on
    on date change, resetting local chip/severity state.
 ═══════════════════════════════════════════════════════════ */
 function LogPanel({ date, onSaveSymptoms, onMarkPeriod, globalSaving }) {
-  const [selected, setSelected]  = useState([]);
-  const [severity, setSeverity]  = useState('Moderate');
-  const [msg, setMsg]            = useState('');
-  const [saving, setSaving]      = useState(false);
+  const [selected, setSelected] = useState([]);
+  const [severity, setSeverity] = useState('Moderate');
+  const [msg, setMsg] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const displayDate = date
     ? new Date(date + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'long' })
@@ -348,13 +348,13 @@ export default function Tracker() {
   const isDemo = !user;
 
   const now = new Date();
-  const [year,  setYear]  = useState(now.getFullYear());
+  const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
   const [selectedDate, setSelectedDate] = useState(todayStr());
   const [globalSaving, setGlobalSaving] = useState(false);
 
   /* Calendar dot sets */
-  const [periodDates,  setPeriodDates]  = useState(() =>
+  const [periodDates, setPeriodDates] = useState(() =>
     isDemo ? buildSeedPeriodDates(now.getFullYear(), now.getMonth()) : new Set()
   );
   const [symptomDates, setSymptomDates] = useState(() =>
@@ -362,7 +362,7 @@ export default function Tracker() {
   );
 
   /* Chart data */
-  const [cycleData,   setCycleData]   = useState(() => isDemo ? SEED_CYCLE_DATA   : []);
+  const [cycleData, setCycleData] = useState(() => isDemo ? SEED_CYCLE_DATA : []);
   const [symptomData, setSymptomData] = useState(() => isDemo ? SEED_SYMPTOM_DATA : []);
 
   /* ── Load this month's dots from Supabase ── */
@@ -373,7 +373,7 @@ export default function Tracker() {
 
     const pad = (n) => String(n).padStart(2, '0');
     const monthStart = `${year}-${pad(month + 1)}-01`;
-    const monthEnd   = `${year}-${pad(month + 1)}-${pad(new Date(year, month + 1, 0).getDate())}`;
+    const monthEnd = `${year}-${pad(month + 1)}-${pad(new Date(year, month + 1, 0).getDate())}`;
 
     const [cyclesRes, symptomsRes] = await Promise.all([
       supabase
@@ -390,7 +390,7 @@ export default function Tracker() {
         .lte('logged_at', monthEnd + 'T23:59:59'),
     ]);
 
-    if (cyclesRes.data)  setPeriodDates(new Set(cyclesRes.data.map((r) => r.cycle_start)));
+    if (cyclesRes.data) setPeriodDates(new Set(cyclesRes.data.map((r) => r.cycle_start)));
     if (symptomsRes.data) setSymptomDates(new Set(symptomsRes.data.map((r) => r.logged_at.slice(0, 10))));
   }, [user, year, month]);
 
@@ -400,7 +400,7 @@ export default function Tracker() {
     const userId = await getOrCreateUserId(user);
     if (!userId) return;
 
-    const sixMonthsAgo  = new Date(); sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    const sixMonthsAgo = new Date(); sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
     const ninetyDaysAgo = new Date(Date.now() - 90 * 86_400_000);
 
     const [chartCyclesRes, chartSymptomsRes] = await Promise.all([
@@ -423,8 +423,8 @@ export default function Tracker() {
       const built = chartCyclesRes.data
         .map((c) => {
           const start = new Date(c.cycle_start + 'T00:00:00');
-          const end   = new Date(c.cycle_end   + 'T00:00:00');
-          const days  = Math.round((end - start) / 86_400_000);
+          const end = new Date(c.cycle_end + 'T00:00:00');
+          const days = Math.round((end - start) / 86_400_000);
           return { label: SHORT_MONTHS[start.getMonth()], length: days };
         })
         .filter((c) => c.length > 0 && c.length < 90);
@@ -513,7 +513,7 @@ export default function Tracker() {
       return 'Log a few cycles with start and end dates to see your trend here.';
     }
     const first = cycleData[0].length;
-    const last  = cycleData[cycleData.length - 1].length;
+    const last = cycleData[cycleData.length - 1].length;
     if (last < first) return "Under 35 days is the comfortable zone. Yours is trending down — that's good news.";
     if (last > first) return 'Cycles have been a bit longer recently. Keep logging — patterns become clearer over time.';
     return 'Your cycle length has been consistent over the last few months.';
@@ -521,7 +521,7 @@ export default function Tracker() {
 
   const symptomInsight = (() => {
     if (symptomData.length === 0) return 'Log symptoms to see which ones appear most often for you.';
-    const top    = symptomData[0].name;
+    const top = symptomData[0].name;
     const second = symptomData[1]?.name;
     return second
       ? `${top} and ${second.toLowerCase()} show up most often for you.`
