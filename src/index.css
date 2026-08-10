@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+/* ============================================================
+   Sakhi Design System — Tailwind v4 Theme Configuration
+   Colors, fonts, and spacing from .cursorrules
+   ============================================================ */
+
+@theme {
+  /* --- Colors --- */
+  --color-primary: #D98880;
+  --color-secondary: #8FA888;
+  --color-accent: #6B3654;
+  --color-background: #FDF8F3;
+  --color-text: #2E2A28;
+  --color-warning: #D4A03C;
+
+  /* --- Fonts --- */
+  --font-heading: 'Poppins', sans-serif;
+  --font-body: 'Inter', sans-serif;
+
+  /* --- Border Radius --- */
+  --radius-card: 16px;
+  --radius-button: 12px;
+}
+
+/* ============================================================
+   Base Styles
+   ============================================================ */
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  color: var(--color-text);
+  background-color: var(--color-background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+}
