@@ -8,6 +8,8 @@ export default function Signup() {
   const navigate = useNavigate();
   const { signUp } = useAuth();
 
+  const [name, setName] = useState('');
+  const [age, setAge] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -25,7 +27,7 @@ export default function Signup() {
     }
 
     setLoading(true);
-    const { data, error: authError } = await signUp(email, password);
+    const { data, error: authError } = await signUp(email, password, { full_name: name.trim(), age: Number(age) });
     setLoading(false);
 
     if (authError) {
@@ -67,6 +69,36 @@ export default function Signup() {
             </div>
           ) : (
             <form onSubmit={handleSignup} className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-text/70 mb-1.5">{t('onboarding_name_label')}</label>
+                <input
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder={t('onboarding_name_placeholder')}
+                  className="w-full px-4 py-3 rounded-[var(--radius-button)] border border-text/15 bg-background
+                             focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary
+                             transition-all text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-text/70 mb-1.5">{t('onboarding_age_label')}</label>
+                <input
+                  type="number"
+                  required
+                  min="10"
+                  max="120"
+                  value={age}
+                  onChange={(e) => setAge(e.target.value)}
+                  placeholder={t('onboarding_age_placeholder')}
+                  className="w-full px-4 py-3 rounded-[var(--radius-button)] border border-text/15 bg-background
+                             focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary
+                             transition-all text-sm"
+                />
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-text/70 mb-1.5">{t('auth_email')}</label>
                 <input
