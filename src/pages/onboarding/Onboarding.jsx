@@ -29,20 +29,30 @@ export default function Onboarding() {
     setSaving(true);
     setError('');
 
-    const { error: dbError } = await supabase.from('users').upsert({
-      auth_id: user?.id,
-      name: name.trim(),
-      age: Number(age),
-      location_type: locationType,
-    }, { onConflict: 'auth_id' });
+    if (user) {
+      const { error: dbError } = await supabase.from('users').upsert({
+        auth_id: user.id,
+        name: name.trim(),
+        age: Number(age),
+        location_type: locationType,
+      }, { onConflict: 'auth_id' });
+
+      if (dbError) {
+        setError(dbError.message);
+        setSaving(false);
+        return;
+      }
+    } else {
+      // Save locally if the user is testing the screening without an account
+      localStorage.setItem('sakhi_onboarding', JSON.stringify({
+        name: name.trim(),
+        age: Number(age),
+        location_type: locationType,
+      }));
+    }
 
     setSaving(false);
-
-    if (dbError) {
-      setError(dbError.message);
-    } else {
-      navigate('/screening');
-    }
+    navigate('/screening');
   };
 
   const locationOptions = [
