@@ -24,7 +24,6 @@ export default function VoiceLog() {
       const recognition = new SpeechRecognition();
       recognition.continuous = false;
       recognition.interimResults = true;
-      // Set language based on active i18n
       recognition.lang = i18n.language === 'mr' ? 'mr-IN' : 'en-IN';
       
       recognition.onresult = (event) => {
@@ -97,22 +96,17 @@ export default function VoiceLog() {
     const today = new Date().toISOString().split('T')[0];
 
     try {
-      // 1. Save Symptoms
       if (parsedData.symptoms && parsedData.symptoms.length > 0) {
-        // Typically, symptom_logs expects one row per symptom or an array. 
-        // We'll assume a structure where we can insert an array of objects or a single row with JSON.
-        // Assuming standard normalized table: user_id, date, symptom
         const symptomInserts = parsedData.symptoms.map(s => ({
           user_id: user.id,
           date: today,
           symptom: s,
-          severity: 'moderate', // default
+          severity: 'moderate',
           source: 'voice'
         }));
         await supabase.from('symptom_logs').insert(symptomInserts);
       }
 
-      // 2. Save Mood/Energy
       if (parsedData.mood || parsedData.energy) {
         await supabase.from('mood_logs').insert({
           user_id: user.id,
@@ -134,124 +128,152 @@ export default function VoiceLog() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="font-heading text-2xl sm:text-3xl font-bold text-accent mb-2">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 font-body">
+      <h1 className="font-heading text-3xl sm:text-4xl font-bold text-text mb-2">
         {t('voice_title')}
       </h1>
-      <p className="text-text/60 mb-8">{t('voice_subtitle')}</p>
+      <p className="text-text/60 text-sm sm:text-base mb-10">
+        {t('voice_subtitle')}
+      </p>
 
-      {/* Mic Area */}
-      <div className="bg-white/60 backdrop-blur-sm border border-primary/15 rounded-[var(--radius-card)] p-8 text-center shadow-sm mb-6">
-        <button
-          onClick={toggleRecording}
-          disabled={!!supportError && !isRecording}
-          className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 transition-all duration-300 shadow-md
-            ${isRecording ? 'bg-accent text-white scale-110 animate-pulse shadow-accent/40' : 'bg-primary text-white hover:bg-primary/90'}
-            ${!!supportError ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-          `}
-        >
-          <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
-          </svg>
-        </button>
-        <p className={`font-medium ${isRecording ? 'text-accent' : 'text-text/70'}`}>
-          {isRecording ? t('voice_listening') : t('voice_tap_to_speak')}
-        </p>
-        {supportError && <p className="text-xs text-warning mt-2">{supportError}</p>}
-      </div>
-
-      {/* Text Fallback / Transcript */}
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-text mb-2">
-          {t('voice_fallback_label')}
-        </label>
-        <textarea
-          value={transcript}
-          onChange={(e) => setTranscript(e.target.value)}
-          placeholder={t('voice_fallback_placeholder')}
-          className="w-full px-4 py-3 rounded-[var(--radius-button)] border border-text/15 bg-white
-                     focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary
-                     transition-all text-base min-h-[120px] resize-y"
-        />
-      </div>
-
-      <button
-        onClick={processTranscript}
-        disabled={isProcessing || !transcript.trim()}
-        className="w-full py-3.5 rounded-[var(--radius-button)] bg-text text-white font-semibold
-                   hover:bg-text/90 active:scale-[0.98] transition-all duration-200 shadow-md
-                   disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer mb-8 flex justify-center items-center"
-      >
-        {isProcessing ? (
-          <span className="flex items-center gap-2">
-            <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            {t('voice_processing')}
-          </span>
-        ) : t('voice_process_button')}
-      </button>
-
-      {/* Results Confirmation */}
-      {parsedData && (
-        <div className="bg-primary/5 border border-primary/20 rounded-[var(--radius-card)] p-6 animate-fade-in mb-6">
-          <h2 className="font-heading text-lg font-semibold text-text mb-4">
-            {t('voice_review_title')}
-          </h2>
-          
-          <div className="space-y-4 mb-6">
-            <div>
-              <p className="text-xs font-medium text-text/50 uppercase tracking-wide mb-1">{t('voice_tags_symptoms')}</p>
-              <div className="flex flex-wrap gap-2">
-                {parsedData.symptoms?.length > 0 ? (
-                  parsedData.symptoms.map((s, i) => (
-                    <span key={i} className="px-3 py-1 bg-white border border-primary/30 rounded-full text-sm text-text">
-                      {s}
-                    </span>
-                  ))
-                ) : (
-                  <span className="text-sm text-text/50 italic">{t('voice_none')}</span>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-xs font-medium text-text/50 uppercase tracking-wide mb-1">{t('voice_tags_mood')}</p>
-                <p className="text-sm font-medium text-text">{parsedData.mood || <span className="text-text/50 italic">{t('voice_none')}</span>}</p>
-              </div>
-              <div>
-                <p className="text-xs font-medium text-text/50 uppercase tracking-wide mb-1">{t('voice_tags_energy')}</p>
-                <p className="text-sm font-medium text-text">{parsedData.energy || <span className="text-text/50 italic">{t('voice_none')}</span>}</p>
-              </div>
-            </div>
-          </div>
-
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+        {/* ── Left Column: Mic Card ── */}
+        <div className="bg-white/60 backdrop-blur-sm border border-text/10 rounded-[var(--radius-card)] p-10 text-center shadow-sm flex flex-col items-center justify-center min-h-[320px]">
           <button
-            onClick={handleSave}
-            disabled={isSaving || !user}
-            className="w-full py-3 rounded-[var(--radius-button)] bg-primary text-white font-semibold
-                       hover:bg-primary/90 active:scale-[0.98] transition-all duration-200
-                       disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            onClick={toggleRecording}
+            disabled={!!supportError && !isRecording}
+            className={`w-32 h-32 rounded-full flex items-center justify-center mb-6 transition-all duration-300 shadow-sm
+              ${isRecording ? 'bg-primary text-white scale-110 animate-pulse' : 'bg-primary/10 text-primary hover:bg-primary/20'}
+              ${!!supportError ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+            `}
           >
-            {isSaving ? '...' : t('voice_save_button')}
+            <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
+            </svg>
           </button>
+          
+          <p className={`text-lg font-semibold mb-2 ${isRecording ? 'text-primary' : 'text-text'}`}>
+            {isRecording ? t('voice_listening') : t('voice_tap_to_speak')}
+          </p>
+          <p className="text-xs text-text/50 max-w-[200px] leading-relaxed">
+            Nothing is uploaded in this demo — audio stays on your device.
+          </p>
+          
+          {supportError && <p className="text-xs text-warning mt-4">{supportError}</p>}
         </div>
-      )}
+
+        {/* ── Right Column: What Sakhi heard ── */}
+        <div className="bg-white/60 backdrop-blur-sm border border-text/10 rounded-[var(--radius-card)] p-8 shadow-sm min-h-[320px] flex flex-col">
+          <h2 className="font-heading text-xl font-bold text-text mb-4">
+            What Sakhi heard
+          </h2>
+
+          {!transcript && !isRecording && !parsedData ? (
+            <p className="text-text/50 text-sm">
+              Your transcription and the symptoms Sakhi picks out will appear here.
+            </p>
+          ) : (
+            <div className="flex-1 flex flex-col">
+              {/* Transcript Textarea */}
+              {!parsedData && (
+                <>
+                  <textarea
+                    value={transcript}
+                    onChange={(e) => setTranscript(e.target.value)}
+                    placeholder={t('voice_fallback_placeholder')}
+                    className="w-full flex-1 px-4 py-3 rounded-[var(--radius-button)] border border-text/15 bg-white
+                               focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary
+                               transition-all text-base min-h-[120px] resize-none mb-4"
+                  />
+                  <button
+                    onClick={processTranscript}
+                    disabled={isProcessing || !transcript.trim()}
+                    className="w-full py-3.5 rounded-[var(--radius-button)] bg-text text-white font-semibold
+                               hover:bg-text/90 active:scale-[0.98] transition-all duration-200 shadow-sm
+                               disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex justify-center items-center"
+                  >
+                    {isProcessing ? (
+                      <span className="flex items-center gap-2">
+                        <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        {t('voice_processing')}
+                      </span>
+                    ) : t('voice_process_button')}
+                  </button>
+                </>
+              )}
+
+              {/* Parsed Data Confirmation */}
+              {parsedData && (
+                <div className="flex-1 flex flex-col justify-between animate-fade-in">
+                  <div>
+                    <p className="text-sm text-text/70 mb-4 italic">"{transcript}"</p>
+                    
+                    <div className="space-y-4 mb-6 bg-primary/5 p-4 rounded-xl border border-primary/10">
+                      <div>
+                        <p className="text-[10px] font-bold text-text/40 uppercase tracking-wider mb-1">{t('voice_tags_symptoms')}</p>
+                        <div className="flex flex-wrap gap-2">
+                          {parsedData.symptoms?.length > 0 ? (
+                            parsedData.symptoms.map((s, i) => (
+                              <span key={i} className="px-2.5 py-1 bg-white border border-primary/20 rounded-full text-xs text-text font-medium">
+                                {s}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-sm text-text/50 italic">{t('voice_none')}</span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-[10px] font-bold text-text/40 uppercase tracking-wider mb-1">{t('voice_tags_mood')}</p>
+                          <p className="text-sm font-medium text-text">{parsedData.mood || <span className="text-text/50 italic">{t('voice_none')}</span>}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold text-text/40 uppercase tracking-wider mb-1">{t('voice_tags_energy')}</p>
+                          <p className="text-sm font-medium text-text">{parsedData.energy || <span className="text-text/50 italic">{t('voice_none')}</span>}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleSave}
+                    disabled={isSaving || !user}
+                    className="w-full py-3.5 rounded-[var(--radius-button)] bg-primary text-white font-semibold
+                               hover:bg-primary/90 active:scale-[0.98] transition-all duration-200 shadow-sm
+                               disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer mt-4"
+                  >
+                    {isSaving ? '...' : t('voice_save_button')}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
 
       {saveSuccess && (
-        <div className="bg-secondary/10 text-secondary border border-secondary/20 p-4 rounded-[var(--radius-button)] text-center animate-fade-in font-medium">
+        <div className="mt-6 bg-secondary/10 text-secondary border border-secondary/20 p-4 rounded-[var(--radius-button)] text-center animate-fade-in font-medium">
           {t('voice_save_success')}
         </div>
       )}
 
-      {/* Warn if not logged in (since we need user.id to save) */}
       {!user && (
         <div className="mt-4 text-center">
           <p className="text-sm text-warning">You must be logged in to save logs.</p>
         </div>
       )}
+
+      {/* Demo Footer Note */}
+      <div className="mt-12 pt-6 border-t border-text/10">
+        <p className="text-xs text-text/40 leading-relaxed max-w-4xl">
+          Demo note: transcription and tag extraction are powered by Web Speech API and Gemini. A production build would use a dedicated cloud speech-to-text service for broader device support.
+        </p>
+      </div>
     </div>
   );
 }
