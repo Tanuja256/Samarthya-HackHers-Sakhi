@@ -11,8 +11,6 @@ const SEED_PHOTOS = [
   { id: 'seed-1', category: 'Jawline — week 1', taken_at: '2026-03-12T00:00:00Z', bg: 'bg-[#F9EBEF]', _seed: true },
   { id: 'seed-2', category: 'Jawline — week 5', taken_at: '2026-04-09T00:00:00Z', bg: 'bg-[#EAF2ED]', _seed: true },
   { id: 'seed-3', category: 'Hairline check', taken_at: '2026-05-18T00:00:00Z', bg: 'bg-[#FAEFDF]', _seed: true },
-  { id: 'seed-4', category: 'Jawline — week 15', taken_at: '2026-06-21T00:00:00Z', bg: 'bg-[#EBE7F2]', _seed: true },
-  { id: 'seed-5', category: 'Jawline — week 20', taken_at: '2026-07-27T00:00:00Z', bg: 'bg-[#FAEBEF]', _seed: true },
 ];
 
 function formatDate(iso) {
