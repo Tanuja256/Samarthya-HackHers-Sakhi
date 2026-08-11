@@ -21,14 +21,6 @@ function IconStreak() {
   );
 }
 
-function IconLightbulb() {
-  return (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-1.5M9.75 18h4.5M12 3.75a6.75 6.75 0 0 0-6.75 6.75c0 2.228.94 4.195 2.457 5.568.79.718 1.293 1.765 1.293 2.873h6c0-1.108.503-2.155 1.293-2.873 1.517-1.373 2.457-3.34 2.457-5.568A6.75 6.75 0 0 0 12 3.75Z" />
-    </svg>
-  );
-}
-
 function IconCalendarCheck() {
   return (
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
@@ -85,20 +77,6 @@ function IconSparkles() {
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a2.25 2.25 0 0 0-1.551-1.551L15.15 6l1.04-.259a2.25 2.25 0 0 0 1.55-1.55L18 3.15l.259 1.04a2.25 2.25 0 0 0 1.55 1.55L20.85 6l-1.04.259a2.25 2.25 0 0 0-1.55 1.551zM19.759 20.715L19.5 21.75l-.259-1.035a2.25 2.25 0 0 0-1.551-1.551L16.65 18l1.04-.259a2.25 2.25 0 0 0 1.55-1.55L19.5 15.15l.259 1.04a2.25 2.25 0 0 0 1.55 1.55L22.35 18l-1.04.259a2.25 2.25 0 0 0-1.55 1.551z" />
     </svg>
-  );
-}
-
-/* ── Insight card for Symptom Detective section ── */
-function InsightCard({ icon, title, body, source }) {
-  return (
-    <div className="bg-white/60 border border-text/8 rounded-[var(--radius-card)] p-5 hover:shadow-md hover:border-primary/20 transition-all duration-200">
-      <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center mb-3 text-primary text-sm">
-        {icon}
-      </div>
-      <h3 className="font-heading text-sm font-semibold text-text mb-1.5">{title}</h3>
-      <p className="text-xs text-text/55 leading-relaxed mb-3">{body}</p>
-      {source && <p className="text-[11px] text-primary/60 italic">{source}</p>}
-    </div>
   );
 }
 
@@ -288,35 +266,6 @@ export default function Dashboard() {
           <p className="text-xs text-text/50">{t('dashboard_festival_subtitle')}</p>
         </Link>
       </div>
-
-      {/* ══════════════════════════════════════════════════════════
-          SYMPTOM DETECTIVE
-         ══════════════════════════════════════════════════════════ */}
-      <section className="mb-8">
-        <h2 className="font-heading text-lg font-bold text-text mb-1">{t('dashboard_detective_title')}</h2>
-        <p className="text-xs text-text/50 mb-4">{t('dashboard_detective_subtitle')}</p>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <InsightCard
-            icon={<IconLightbulb />}
-            title={t('dashboard_insight_sleep_title')}
-            body={t('dashboard_insight_sleep_body')}
-            source={t('dashboard_insight_source_detective')}
-          />
-          <InsightCard
-            icon={<IconLightbulb />}
-            title={t('dashboard_insight_cycles_title')}
-            body={t('dashboard_insight_cycles_body')}
-            source={t('dashboard_insight_source_cycle')}
-          />
-          <InsightCard
-            icon={<IconLightbulb />}
-            title={t('dashboard_insight_energy_title')}
-            body={t('dashboard_insight_energy_body')}
-            source={t('dashboard_insight_source_detective')}
-          />
-        </div>
-      </section>
 
       {/* ══════════════════════════════════════════════════════════
           EVERYTHING ELSE — Quick Navigation Grid
