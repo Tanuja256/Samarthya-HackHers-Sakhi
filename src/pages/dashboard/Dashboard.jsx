@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../lib/AuthContext';
 import { supabase } from '../../lib/supabaseClient';
+import { calculatePredictions } from '../tracker/Tracker';
 /* ── Icon components used throughout the dashboard ── */
 function IconMic() {
   return (
@@ -128,25 +129,36 @@ export default function Dashboard() {
   
   const [profile, setProfile] = useState(null);
   const [profileLoading, setProfileLoading] = useState(true);
+  const [cycleLogs, setCycleLogs] = useState([]);
 
   useEffect(() => {
     if (!user) {
       setProfileLoading(false);
       return;
     }
-    const fetchProfile = async () => {
+    const fetchData = async () => {
       try {
-        const { data } = await supabase
+        const { data: profileData } = await supabase
           .from('users')
-          .select('name, age')
+          .select('id, name, age')
           .eq('auth_id', user.id)
           .single();
-        if (data) setProfile(data);
+
+        if (profileData) {
+          setProfile(profileData);
+          const { data: cycleData } = await supabase
+            .from('cycle_logs')
+            .select('cycle_start, cycle_end')
+            .eq('user_id', profileData.id)
+            .order('cycle_start', { ascending: true });
+          
+          if (cycleData) setCycleLogs(cycleData);
+        }
       } finally {
         setProfileLoading(false);
       }
     };
-    fetchProfile();
+    fetchData();
   }, [user]);
 
   const userName = profile?.name;
@@ -154,8 +166,24 @@ export default function Dashboard() {
     ? t('dashboard_greeting', { name: userName })
     : t('dashboard_greeting_default');
 
-  // Placeholder data — will be replaced with real Supabase queries
-  const streakDays = 12;
+  let daysLeftStr = null;
+  let isPeriodToday = false;
+  if (cycleLogs && cycleLogs.length >= 2) {
+    const { predictedStart } = calculatePredictions(cycleLogs);
+    if (predictedStart) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const start = new Date(predictedStart + 'T00:00:00');
+      const diff = Math.round((start - today) / 86_400_000);
+      
+      if (diff <= 0) {
+        isPeriodToday = true;
+      } else {
+        daysLeftStr = diff;
+      }
+    }
+  }
+
   const riskTier = 'low'; // 'low' | 'moderate' | 'high' | null
 
   const riskConfig = {
@@ -242,15 +270,33 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Streak */}
+        {/* Days Left for Period */}
         <div className="bg-white/60 backdrop-blur-sm border border-text/8 rounded-[var(--radius-card)] p-5 sm:p-6 shadow-sm flex flex-col items-center justify-center text-center">
           <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-2">
             <IconStreak />
           </div>
-          <p className="font-heading text-3xl font-bold text-text mb-0.5">
-            {streakDays} <span className="text-base font-semibold text-text/60">{t('dashboard_streak_unit')}</span>
-          </p>
-          <p className="text-xs text-text/45">{t('dashboard_streak_subtitle')}</p>
+          {cycleLogs.length < 2 ? (
+            <>
+              <p className="font-heading text-lg font-bold text-text mb-1">
+                Log your period
+              </p>
+              <p className="text-xs text-text/45">to see predictions</p>
+            </>
+          ) : isPeriodToday ? (
+            <>
+              <p className="font-heading text-lg font-bold text-text mb-1 text-primary">
+                Period expected today
+              </p>
+              <p className="text-xs text-text/45">Log your symptoms</p>
+            </>
+          ) : (
+            <>
+              <p className="font-heading text-3xl font-bold text-text mb-0.5">
+                {daysLeftStr} <span className="text-base font-semibold text-text/60">days</span>
+              </p>
+              <p className="text-xs text-text/45">left for your period</p>
+            </>
+          )}
         </div>
       </div>
 

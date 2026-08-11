@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   BarChart, Bar, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip,
@@ -9,6 +9,7 @@ import { useAuth } from '../../lib/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { trackerTranslations } from './translations';
 import BackButton from '../../components/BackButton';
+import ConfirmModal from '../../components/ConfirmModal';
 
 /* ═══════════════════════════════════════════════════════════
    CONSTANTS
@@ -106,10 +107,66 @@ async function getOrCreateUserId(authUser) {
   return created?.id ?? null;
 }
 
+export function calculatePredictions(cycleLogs) {
+  let autoAvgCycleLength = 28;
+  let autoAvgPeriodDuration = 5;
+  
+  if (!cycleLogs || cycleLogs.length === 0) {
+    return { autoAvgCycleLength, autoAvgPeriodDuration, predictedStart: null };
+  }
+
+  const uniqueStarts = [...new Set(cycleLogs.map(l => l.cycle_start))].sort();
+  if (uniqueStarts.length >= 2) {
+    let total = 0;
+    let count = 0;
+    for (let i = 0; i < uniqueStarts.length - 1; i++) {
+      const d1 = new Date(uniqueStarts[i] + 'T00:00:00');
+      const d2 = new Date(uniqueStarts[i + 1] + 'T00:00:00');
+      const days = Math.round((d2 - d1) / 86_400_000);
+      if (days >= 14 && days <= 90) {
+        total += days;
+        count++;
+      }
+    }
+    if (count > 0) autoAvgCycleLength = Math.round(total / count);
+  }
+
+  let pdTotal = 0;
+  let pdCount = 0;
+  const uniquePeriods = new Map();
+  cycleLogs.forEach(log => {
+    if (log.cycle_end) {
+      uniquePeriods.set(log.cycle_start, log.cycle_end);
+    }
+  });
+  uniquePeriods.forEach((endStr, startStr) => {
+    const start = new Date(startStr + 'T00:00:00');
+    const end = new Date(endStr + 'T00:00:00');
+    const dur = Math.round((end - start) / 86_400_000) + 1;
+    if (dur >= 1 && dur <= 14) {
+      pdTotal += dur;
+      pdCount++;
+    }
+  });
+  if (pdCount > 0) autoAvgPeriodDuration = Math.round(pdTotal / pdCount);
+
+  const mostRecentStr = uniqueStarts[uniqueStarts.length - 1];
+  const nextStart = new Date(new Date(mostRecentStr + 'T00:00:00').getTime() + autoAvgCycleLength * 86_400_000);
+  
+  const pad = (n) => String(n).padStart(2, '0');
+  const formatLocal = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+  return {
+    autoAvgCycleLength,
+    autoAvgPeriodDuration,
+    predictedStart: formatLocal(nextStart)
+  };
+}
+
 /* ═══════════════════════════════════════════════════════════
    CALENDAR GRID COMPONENT
 ═══════════════════════════════════════════════════════════ */
-function CalendarGrid({ year, month, selectedDate, periodDates, symptomDates, onSelectDate, onPrevMonth, onNextMonth, tTracker }) {
+function CalendarGrid({ year, month, selectedDate, actualPeriodDays, predictedPeriodDays, symptomDates, onSelectDate, onPrevMonth, onNextMonth, tTracker }) {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDaySun = new Date(year, month, 1).getDay();   // 0 = Sun
   const firstDayMon = (firstDaySun + 6) % 7;               // convert to Mon-first: Mon=0, Sun=6
@@ -156,8 +213,12 @@ function CalendarGrid({ year, month, selectedDate, periodDates, symptomDates, on
 
         <div className="flex items-center gap-3 text-xs text-text/50">
           <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-primary inline-block" />
+            <span className="w-3 h-3 rounded bg-primary/15 inline-block" />
             {tTracker('period')}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded border border-primary/40 border-dashed bg-primary/5 inline-block" />
+            {tTracker('predicted')}
           </span>
           <span className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-secondary inline-block" />
@@ -181,30 +242,39 @@ function CalendarGrid({ year, month, selectedDate, periodDates, symptomDates, on
           if (!day) return <div key={`pad-${i}`} className="h-10" />;
 
           const dStr = ds(day);
-          const hasPeriod = periodDates.has(dStr);
+          const hasActualPeriod = actualPeriodDays.has(dStr);
+          const hasPredictedPeriod = predictedPeriodDays.has(dStr);
           const hasSymptom = symptomDates.has(dStr);
           const isSelected = selectedDate === dStr;
           const isToday = dStr === today;
+          const isFutureUnlogged = dStr > today && !hasActualPeriod && !hasSymptom;
 
           return (
             <button
               key={day}
               type="button"
               id={`cal-day-${dStr}`}
-              onClick={() => onSelectDate(dStr)}
+              onClick={() => !isFutureUnlogged && onSelectDate(dStr)}
+              disabled={isFutureUnlogged}
               className={[
-                'flex flex-col items-center justify-center h-10 rounded-lg text-sm transition-all cursor-pointer select-none',
+                'flex flex-col items-center justify-center h-10 rounded-lg text-sm transition-all select-none',
+                isFutureUnlogged
+                  ? 'text-text/30 cursor-not-allowed'
+                  : 'cursor-pointer',
                 isSelected
                   ? 'border-2 border-accent text-accent font-semibold bg-accent/5'
-                  : isToday
-                    ? 'text-primary font-semibold hover:bg-primary/8'
-                    : 'text-text/65 hover:bg-text/5',
+                  : hasActualPeriod
+                    ? 'bg-primary/15 text-primary font-medium hover:bg-primary/25'
+                    : hasPredictedPeriod
+                      ? 'border border-primary/40 border-dashed text-primary/70 bg-primary/5 hover:bg-primary/10'
+                      : isToday
+                        ? 'text-primary font-semibold hover:bg-primary/8'
+                        : isFutureUnlogged ? '' : 'text-text/65 hover:bg-text/5',
               ].join(' ')}
             >
               <span className="leading-none">{day}</span>
               {/* Dots row — always rendered at fixed height so cells align */}
               <span className="h-2 flex items-center gap-0.5 mt-0.5">
-                {hasPeriod && <span className="w-1.5 h-1.5 rounded-full bg-primary  block" />}
                 {hasSymptom && <span className="w-1.5 h-1.5 rounded-full bg-secondary block" />}
               </span>
             </button>
@@ -220,11 +290,15 @@ function CalendarGrid({ year, month, selectedDate, periodDates, symptomDates, on
    key={selectedDate} is passed from parent so it remounts
    on date change, resetting local chip/severity state.
 ═══════════════════════════════════════════════════════════ */
-function LogPanel({ date, onSaveSymptoms, onMarkPeriod, globalSaving, tTracker, lang }) {
+function LogPanel({ date, selectedLog, onSaveSymptoms, onMarkPeriod, onDeletePeriod, globalSaving, tTracker, lang, initialDuration }) {
   const [selected, setSelected] = useState([]);
   const [severity, setSeverity] = useState('Moderate');
   const [msg, setMsg] = useState('');
   const [saving, setSaving] = useState(false);
+  const [duration, setDuration] = useState(initialDuration);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => { setDuration(initialDuration); }, [initialDuration, selectedLog]);
 
   const displayDate = date
     ? new Date(date + 'T00:00:00').toLocaleDateString(lang === 'mr' ? 'mr-IN' : 'en-IN', { day: 'numeric', month: 'long' })
@@ -248,10 +322,21 @@ function LogPanel({ date, onSaveSymptoms, onMarkPeriod, globalSaving, tTracker, 
   };
 
   const handlePeriod = async () => {
+    if (date > todayStr()) { flash("You can only log dates up to today"); return; }
     setSaving(true);
-    await onMarkPeriod(date);
+    const targetDate = selectedLog ? selectedLog.cycle_start : date;
+    await onMarkPeriod(targetDate, duration);
     setSaving(false);
     flash(tTracker('marked_period'));
+  };
+
+  const handleConfirmDelete = async () => {
+    setIsModalOpen(false);
+    setSaving(true);
+    const targetDate = selectedLog ? selectedLog.cycle_start : date;
+    await onDeletePeriod(targetDate);
+    setSaving(false);
+    flash('Period unmarked');
   };
 
   const isDisabled = saving || globalSaving;
@@ -311,29 +396,63 @@ function LogPanel({ date, onSaveSymptoms, onMarkPeriod, globalSaving, tTracker, 
       )}
 
       {/* ── Action buttons ── */}
-      <div className="flex gap-2.5 flex-wrap">
-        <button
-          type="button"
-          id="log-save-symptoms-btn"
-          disabled={isDisabled}
-          onClick={handleSave}
-          className="px-4 py-2.5 rounded-[var(--radius-button)] bg-accent text-white text-sm font-semibold
-                     hover:bg-accent/85 active:scale-[0.98] transition-all cursor-pointer
-                     disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          {tTracker('save_symptoms')}
-        </button>
-        <button
-          type="button"
-          id="log-mark-period-btn"
-          disabled={isDisabled}
-          onClick={handlePeriod}
-          className="px-4 py-2.5 rounded-[var(--radius-button)] border border-text/20 text-sm font-medium
-                     text-text/65 hover:bg-text/5 transition-all cursor-pointer
-                     disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          {tTracker('mark_period')}
-        </button>
+      <div className="flex flex-col gap-4">
+        <div className="flex gap-2.5 flex-wrap">
+          <button
+            type="button"
+            id="log-save-symptoms-btn"
+            disabled={isDisabled}
+            onClick={handleSave}
+            className="px-4 py-2.5 rounded-[var(--radius-button)] bg-accent text-white text-sm font-semibold
+                       hover:bg-accent/85 active:scale-[0.98] transition-all cursor-pointer
+                       disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {tTracker('save_symptoms')}
+          </button>
+          <button
+            type="button"
+            id="log-mark-period-btn"
+            disabled={isDisabled}
+            onClick={handlePeriod}
+            className="px-4 py-2.5 rounded-[var(--radius-button)] border border-text/20 text-sm font-medium
+                       text-text/65 hover:bg-text/5 transition-all cursor-pointer
+                       disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {selectedLog ? 'Update Period' : tTracker('mark_period')}
+          </button>
+          {selectedLog && (
+            <button
+              type="button"
+              disabled={isDisabled}
+              onClick={() => setIsModalOpen(true)}
+              className="px-4 py-2.5 rounded-[var(--radius-button)] border border-warning/30 text-warning text-sm font-medium
+                         hover:bg-warning/10 transition-all cursor-pointer
+                         disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Unmark as period date
+            </button>
+          )}
+        </div>
+
+        {/* Duration Input */}
+        <div className="flex gap-4 p-3 mt-1 bg-primary/5 rounded-lg border border-primary/20">
+          <div className="flex-1">
+             <label className="block text-xs font-semibold text-text/70 mb-1">
+               {selectedLog ? "This Logged Period's Duration (days)" : "Duration for New Period Log (days)"}
+             </label>
+             <input type="number" min="1" max="14" value={duration} onChange={e => setDuration(Number(e.target.value))} className="w-full bg-white border border-text/10 rounded px-2 py-1 text-sm outline-none focus:border-primary/50" />
+           </div>
+        </div>
+
+        <ConfirmModal
+          isOpen={isModalOpen}
+          title="Unmark Period Date"
+          message="Are you sure you want to unmark this period day? This will remove the period log."
+          confirmText="Yes, unmark"
+          cancelText="Cancel"
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setIsModalOpen(false)}
+        />
       </div>
     </div>
   );
@@ -345,7 +464,7 @@ function LogPanel({ date, onSaveSymptoms, onMarkPeriod, globalSaving, tTracker, 
 export default function Tracker() {
   const { user } = useAuth();
   const { i18n } = useTranslation();
-  
+
   const lang = i18n.language === 'mr' ? 'mr' : 'en';
   const tTracker = useCallback((key) => {
     return trackerTranslations[lang]?.[key] || trackerTranslations['en'][key] || key;
@@ -360,9 +479,7 @@ export default function Tracker() {
   const [globalSaving, setGlobalSaving] = useState(false);
 
   /* Calendar dot sets */
-  const [periodDates, setPeriodDates] = useState(() =>
-    isDemo ? buildSeedPeriodDates(now.getFullYear(), now.getMonth()) : new Set()
-  );
+  const [cycleLogs, setCycleLogs] = useState(() => isDemo ? SEED_CYCLE_DATA : []);
   const [symptomDates, setSymptomDates] = useState(() =>
     isDemo ? buildSeedSymptomDates(now.getFullYear(), now.getMonth()) : new Set()
   );
@@ -370,6 +487,21 @@ export default function Tracker() {
   /* Chart data */
   const [cycleData, setCycleData] = useState(() => isDemo ? SEED_CYCLE_DATA : []);
   const [symptomData, setSymptomData] = useState(() => isDemo ? SEED_SYMPTOM_DATA : []);
+
+  /* ── Load all cycle logs ── */
+  const loadUserDataAndLogs = useCallback(async () => {
+    if (!user) return;
+    const userId = await getOrCreateUserId(user);
+    if (!userId) return;
+
+    // Load all cycle logs
+    const { data: logsData } = await supabase.from('cycle_logs').select('id, cycle_start, cycle_end').eq('user_id', userId).order('cycle_start', { ascending: true });
+    if (logsData) {
+      setCycleLogs(logsData);
+    }
+  }, [user]);
+
+  useEffect(() => { loadUserDataAndLogs(); }, [loadUserDataAndLogs]);
 
   /* ── Load this month's dots from Supabase ── */
   const loadMonthData = useCallback(async () => {
@@ -381,23 +513,14 @@ export default function Tracker() {
     const monthStart = `${year}-${pad(month + 1)}-01`;
     const monthEnd = `${year}-${pad(month + 1)}-${pad(new Date(year, month + 1, 0).getDate())}`;
 
-    const [cyclesRes, symptomsRes] = await Promise.all([
-      supabase
-        .from('cycle_logs')
-        .select('cycle_start')
-        .eq('user_id', userId)
-        .gte('cycle_start', monthStart)
-        .lte('cycle_start', monthEnd),
-      supabase
-        .from('symptom_logs')
-        .select('logged_at')
-        .eq('user_id', userId)
-        .gte('logged_at', monthStart + 'T00:00:00')
-        .lte('logged_at', monthEnd + 'T23:59:59'),
-    ]);
+    const { data: symptomsRes } = await supabase
+      .from('symptom_logs')
+      .select('logged_at')
+      .eq('user_id', userId)
+      .gte('logged_at', monthStart + 'T00:00:00')
+      .lte('logged_at', monthEnd + 'T23:59:59');
 
-    if (cyclesRes.data) setPeriodDates(new Set(cyclesRes.data.map((r) => r.cycle_start)));
-    if (symptomsRes.data) setSymptomDates(new Set(symptomsRes.data.map((r) => r.logged_at.slice(0, 10))));
+    if (symptomsRes) setSymptomDates(new Set(symptomsRes.map((r) => r.logged_at.slice(0, 10))));
   }, [user, year, month]);
 
   /* ── Load chart data from Supabase ── */
@@ -412,12 +535,10 @@ export default function Tracker() {
     const [chartCyclesRes, chartSymptomsRes] = await Promise.all([
       supabase
         .from('cycle_logs')
-        .select('cycle_start, cycle_end')
+        .select('cycle_start')
         .eq('user_id', userId)
-        .not('cycle_end', 'is', null)
         .gte('cycle_start', sixMonthsAgo.toISOString().slice(0, 10))
-        .order('cycle_start', { ascending: true })
-        .limit(8),
+        .order('cycle_start', { ascending: true }),
       supabase
         .from('symptom_logs')
         .select('symptom')
@@ -425,15 +546,18 @@ export default function Tracker() {
         .gte('logged_at', ninetyDaysAgo.toISOString()),
     ]);
 
-    if (chartCyclesRes.data?.length > 0) {
-      const built = chartCyclesRes.data
-        .map((c) => {
-          const start = new Date(c.cycle_start + 'T00:00:00');
-          const end = new Date(c.cycle_end + 'T00:00:00');
-          const days = Math.round((end - start) / 86_400_000);
-          return { label: SHORT_MONTHS[start.getMonth()], length: days };
-        })
-        .filter((c) => c.length > 0 && c.length < 90);
+    if (chartCyclesRes.data?.length > 1) {
+      const uniqueStarts = [...new Set(chartCyclesRes.data.map(c => c.cycle_start))].sort();
+      const built = [];
+      for (let i = 0; i < uniqueStarts.length - 1; i++) {
+        const start = new Date(uniqueStarts[i] + 'T00:00:00');
+        const nextStart = new Date(uniqueStarts[i + 1] + 'T00:00:00');
+        const days = Math.round((nextStart - start) / 86_400_000);
+        // Exclude unrealistically short cycles (likely duplicate entries for same period)
+        if (days >= 14 && days <= 90) {
+          built.push({ label: SHORT_MONTHS[start.getMonth()], length: days });
+        }
+      }
       setCycleData(built);
     }
 
@@ -454,6 +578,44 @@ export default function Tracker() {
 
   useEffect(() => { loadMonthData(); }, [loadMonthData]);
   useEffect(() => { loadChartData(); }, [loadChartData]);
+
+  /* ── Prediction Logic ── */
+  const pad = (n) => String(n).padStart(2, '0');
+  const formatLocal = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+  /* ── Auto-calculated Averages ── */
+  const { autoAvgCycleLength, autoAvgPeriodDuration, predictedStart } = useMemo(() => {
+    return calculatePredictions(cycleLogs);
+  }, [cycleLogs]);
+
+  const actualPeriodDays = useMemo(() => {
+    const days = new Set();
+    if (!cycleLogs) return days;
+    cycleLogs.forEach(log => {
+      const startD = new Date(log.cycle_start + 'T00:00:00');
+      let duration = 5;
+      if (log.cycle_end) {
+        const endD = new Date(log.cycle_end + 'T00:00:00');
+        duration = Math.round((endD - startD) / 86_400_000) + 1;
+      }
+      for (let i = 0; i < duration; i++) {
+        const d = new Date(startD.getTime() + i * 86_400_000);
+        days.add(formatLocal(d));
+      }
+    });
+    return days;
+  }, [cycleLogs]);
+
+  const predictedPeriodDays = useMemo(() => {
+    if (!predictedStart) return new Set();
+    const pDays = new Set();
+    const nextStart = new Date(predictedStart + 'T00:00:00');
+    for (let i = 0; i < autoAvgPeriodDuration; i++) {
+      const d = new Date(nextStart.getTime() + i * 86_400_000);
+      pDays.add(formatLocal(d));
+    }
+    return pDays;
+  }, [predictedStart, autoAvgPeriodDuration]);
 
   /* ── Month navigation ── */
   const prevMonth = () => {
@@ -495,20 +657,61 @@ export default function Tracker() {
     setGlobalSaving(false);
   };
 
-  const handleMarkPeriod = async (date) => {
+  const handleMarkPeriod = async (date, periodDur) => {
+    const endD = new Date(new Date(date + 'T00:00:00').getTime() + (periodDur - 1) * 86_400_000);
+    const cycleEnd = formatLocal(endD);
+
     if (!user) {
-      setPeriodDates((prev) => new Set([...prev, date]));
+      setCycleLogs((prev) => {
+        const existing = prev.find(p => p.cycle_start === date);
+        if (existing) return prev.map(p => p.cycle_start === date ? { ...p, cycle_end: cycleEnd } : p);
+        return [...prev, { id: Date.now().toString(), cycle_start: date, cycle_end: cycleEnd }];
+      });
       return;
     }
 
     setGlobalSaving(true);
     const userId = await getOrCreateUserId(user);
     if (userId) {
-      const { error } = await supabase
-        .from('cycle_logs')
-        .insert({ user_id: userId, cycle_start: date });
+      const existing = cycleLogs.find(l => l.cycle_start === date);
+      let error = null;
+      let inserted = null;
+
+      if (existing) {
+        const res = await supabase.from('cycle_logs').update({ cycle_end: cycleEnd }).eq('id', existing.id).select();
+        error = res.error;
+        inserted = res.data?.[0];
+      } else {
+        const res = await supabase.from('cycle_logs').insert({ user_id: userId, cycle_start: date, cycle_end: cycleEnd }).select();
+        error = res.error;
+        inserted = res.data?.[0];
+      }
+
       if (error) console.error('[Sakhi Tracker] period mark error:', error);
-      else setPeriodDates((prev) => new Set([...prev, date]));
+      else if (inserted) {
+        setCycleLogs((prev) => {
+          if (existing) return prev.map(p => p.id === existing.id ? inserted : p);
+          return [...prev, inserted];
+        });
+        await loadChartData();
+      }
+    }
+    setGlobalSaving(false);
+  };
+
+  const handleDeletePeriod = async (date) => {
+    if (!user) {
+      setCycleLogs(prev => prev.filter(p => p.cycle_start !== date));
+      return;
+    }
+    setGlobalSaving(true);
+    const userId = await getOrCreateUserId(user);
+    if (userId) {
+      const { error } = await supabase.from('cycle_logs').delete().eq('cycle_start', date).eq('user_id', userId);
+      if (!error) {
+        setCycleLogs(prev => prev.filter(p => p.cycle_start !== date));
+        await loadChartData();
+      }
     }
     setGlobalSaving(false);
   };
@@ -527,25 +730,49 @@ export default function Tracker() {
 
   const symptomInsight = (() => {
     if (symptomData.length === 0) return tTracker('symptom_insight_empty');
-    
+
     const getTransName = (name) => {
       const meta = SYMPTOM_CHIPS.find(s => s.label === name);
       return meta ? tTracker(meta.key) : name;
     };
-    
+
     const top = getTransName(symptomData[0].name);
     const second = symptomData[1] ? getTransName(symptomData[1].name) : null;
-    
+
     if (lang === 'mr') {
       return second
         ? `${top} आणि ${second.toLowerCase()} तुमच्यासाठी सर्वात जास्त वेळा दिसतात.`
         : `${top} तुमच्यासाठी सर्वात जास्त वेळा दिसते.`;
     }
-    
+
     return second
       ? `${top} and ${second.toLowerCase()} show up most often for you.`
       : `${top} shows up most often for you.`;
   })();
+
+  /* ── Get initial duration for LogPanel ── */
+  const selectedLog = useMemo(() => {
+    return cycleLogs.find(l => {
+      const startD = new Date(l.cycle_start + 'T00:00:00');
+      let dur = 5;
+      if (l.cycle_end) {
+        const endD = new Date(l.cycle_end + 'T00:00:00');
+        dur = Math.round((endD - startD) / 86_400_000) + 1;
+      }
+      const targetD = new Date(selectedDate + 'T00:00:00');
+      const diff = Math.round((targetD - startD) / 86_400_000);
+      return diff >= 0 && diff < dur;
+    });
+  }, [cycleLogs, selectedDate]);
+
+  const selectedInitialDuration = useMemo(() => {
+    if (selectedLog && selectedLog.cycle_end) {
+      const start = new Date(selectedLog.cycle_start + 'T00:00:00');
+      const end = new Date(selectedLog.cycle_end + 'T00:00:00');
+      return Math.round((end - start) / 86_400_000) + 1;
+    }
+    return autoAvgPeriodDuration;
+  }, [selectedLog, autoAvgPeriodDuration]);
 
   /* ══════════════════════════════════════════════════════════
      RENDER
@@ -575,13 +802,22 @@ export default function Tracker() {
             year={year}
             month={month}
             selectedDate={selectedDate}
-            periodDates={periodDates}
+            actualPeriodDays={actualPeriodDays}
+            predictedPeriodDays={predictedPeriodDays}
             symptomDates={symptomDates}
             onSelectDate={setSelectedDate}
             onPrevMonth={prevMonth}
             onNextMonth={nextMonth}
             tTracker={tTracker}
           />
+          {predictedStart && (
+            <div className="mt-4 pt-4 border-t border-text/10 text-sm text-text/70 text-center font-medium">
+              {tTracker('next_period_expected')}{' '}
+              <span className="text-primary font-bold">
+                {new Date(predictedStart + 'T00:00:00').toLocaleDateString(lang === 'mr' ? 'mr-IN' : 'en-IN', { day: 'numeric', month: 'short' })}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Log panel card — key ensures local state resets on date change */}
@@ -591,9 +827,12 @@ export default function Tracker() {
             date={selectedDate}
             onSaveSymptoms={handleSaveSymptoms}
             onMarkPeriod={handleMarkPeriod}
+            onDeletePeriod={handleDeletePeriod}
+            selectedLog={selectedLog}
             globalSaving={globalSaving}
             tTracker={tTracker}
             lang={lang}
+            initialDuration={selectedInitialDuration}
           />
         </div>
       </div>

@@ -26,6 +26,7 @@ export const trackerTranslations = {
     // Calendar
     period: 'Period',
     symptom: 'Symptom',
+    predicted: 'Predicted',
     
     // LogPanel
     log_for: 'Log for',
@@ -40,6 +41,7 @@ export const trackerTranslations = {
     // Tracker Header
     page_title: 'Cycle & symptom tracker',
     page_subtitle: 'Tap a date to log a period day or how you felt. Two minutes a week is enough to see a pattern.',
+    next_period_expected: 'Next period expected:',
     
     // Charts
     cycle_chart_title: 'Cycle length over 6 months',
@@ -86,6 +88,7 @@ export const trackerTranslations = {
     // Calendar
     period: 'मासिक पाळी',
     symptom: 'लक्षण',
+    predicted: 'अपेक्षित',
     
     // LogPanel
     log_for: 'नोंद:',
@@ -100,6 +103,7 @@ export const trackerTranslations = {
     // Tracker Header
     page_title: 'पाळी आणि लक्षणे ट्रॅकर',
     page_subtitle: 'पाळीचा दिवस किंवा तुम्हाला कसे वाटले याची नोंद करण्यासाठी तारखेवर टॅप करा. आठवड्यातून दोन मिनिटे पॅटर्न पाहण्यासाठी पुरेशी आहेत.',
+    next_period_expected: 'पुढील पाळी अपेक्षित:',
     
     // Charts
     cycle_chart_title: '६ महिन्यांतील पाळीचा कालावधी',
