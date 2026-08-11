@@ -127,16 +127,24 @@ export default function Dashboard() {
   const { user } = useAuth();
   
   const [profile, setProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setProfileLoading(false);
+      return;
+    }
     const fetchProfile = async () => {
-      const { data } = await supabase
-        .from('users')
-        .select('name, age')
-        .eq('auth_id', user.id)
-        .single();
-      if (data) setProfile(data);
+      try {
+        const { data } = await supabase
+          .from('users')
+          .select('name, age')
+          .eq('auth_id', user.id)
+          .single();
+        if (data) setProfile(data);
+      } finally {
+        setProfileLoading(false);
+      }
     };
     fetchProfile();
   }, [user]);
@@ -161,19 +169,29 @@ export default function Dashboard() {
     <div className="max-w-5xl mx-auto px-4 py-6 sm:py-8">
       {/* ── Greeting & Profile ── */}
       <div className="flex items-center justify-between mb-1">
-        <h1 className="font-heading text-2xl sm:text-3xl font-bold text-text">
-          {greeting}
+        <h1 className="font-heading text-2xl sm:text-3xl font-bold text-text h-9 sm:h-10 flex items-center">
+          {profileLoading ? (
+            <span className="w-48 h-8 rounded-lg bg-text/5 animate-pulse inline-block"></span>
+          ) : (
+            greeting
+          )}
         </h1>
         <Link 
           to="/settings" 
           className="flex items-center gap-2 px-3 py-1.5 bg-white/60 border border-text/10 rounded-full hover:bg-white transition-colors shadow-sm shrink-0"
         >
           <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs uppercase">
-            {profile?.name ? profile.name.charAt(0) : '👤'}
+            {profileLoading ? '' : (profile?.name ? profile.name.charAt(0) : '👤')}
           </div>
           <div className="hidden sm:block text-left">
-            <p className="text-xs font-semibold text-text leading-tight">{profile?.name || 'Profile'}</p>
-            {profile?.age && <p className="text-[10px] text-text/50 leading-tight">{profile.age} yrs</p>}
+            {profileLoading ? (
+              <div className="w-12 h-3 rounded bg-text/5 animate-pulse"></div>
+            ) : (
+              <>
+                <p className="text-xs font-semibold text-text leading-tight">{profile?.name || 'Profile'}</p>
+                {profile?.age && <p className="text-[10px] text-text/50 leading-tight">{profile.age} yrs</p>}
+              </>
+            )}
           </div>
           <svg className="w-4 h-4 text-text/40 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
