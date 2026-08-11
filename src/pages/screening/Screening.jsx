@@ -381,25 +381,6 @@ function ResultScreen({ tier, totalScore, onRetake }) {
 
           {/* Action buttons */}
           <div className="space-y-3">
-            {/*
-              "Watch my results explained" button — P4 placeholder.
-              Routes to /screening/video-summary which will be wired
-              to a real AI video summary feature in Phase 4.
-            */}
-            <button
-              type="button"
-              id="screening-watch-video-btn"
-              onClick={() => navigate('/screening/video-summary')}
-              className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-[var(--radius-button)]
-                         bg-accent text-white font-semibold hover:bg-accent/85 active:scale-[0.98]
-                         transition-all duration-200 cursor-pointer text-sm"
-            >
-              <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" />
-              </svg>
-              {tLocal('res_watch_video', 'Watch my results explained')}
-            </button>
-
             <div className="flex flex-col sm:flex-row items-center gap-3 w-full mt-2">
               <button
                 type="button"
@@ -452,45 +433,6 @@ function SavingScreen() {
   );
 }
 
-
-/* ─────────────────────────────────────────────────────────────
-   VIDEO SUMMARY PLACEHOLDER — P4 will wire this to real feature
-───────────────────────────────────────────────────────────── */
-export function VideoSummaryPlaceholder() {
-  const navigate = useNavigate();
-  return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4">
-      <div className="w-full max-w-lg text-center">
-        <div className="bg-white/65 backdrop-blur-sm border border-primary/15 rounded-[var(--radius-card)] p-8 sm:p-10 shadow-sm">
-          <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center text-3xl mx-auto mb-5">
-            🎬
-          </div>
-          <h1 className="font-heading text-2xl font-bold text-accent mb-3">
-            Video summary coming soon
-          </h1>
-          <p className="text-sm text-text/55 leading-relaxed mb-6">
-            In Phase 4, Sakhi will generate a personalised video explanation of your screening
-            results — narrated calmly in your language, with captions, no medical jargon.
-          </p>
-          <div className="bg-text/5 border border-text/10 rounded-[var(--radius-button)] p-4 mb-6">
-            <p className="text-xs text-text/45 leading-relaxed">
-              This feature uses Gemini to write a gentle script based on your answers, then
-              synthesises it to audio and adds timed captions — all stored privately in your account.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => navigate('/screening')}
-            className="px-6 py-3 rounded-[var(--radius-button)] bg-primary text-white font-semibold
-                       hover:bg-primary/85 transition-all cursor-pointer text-sm"
-          >
-            Back to screening
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 /* ─────────────────────────────────────────────────────────────
    MAIN SCREENING COMPONENT
