@@ -198,11 +198,11 @@ export default function Dashboard() {
                 {t('dashboard_risk_low_body')}
               </p>
               <Link
-                to="/screening"
+                to="/screening?retake=1"
                 className="inline-flex items-center gap-1 px-4 py-2 rounded-[var(--radius-button)] border border-text/15
                            text-sm font-medium text-text/70 hover:bg-text/5 hover:text-text transition-all"
               >
-                {t('dashboard_retake_screening')}
+                {t('dashboard_retake_screening') || 'Retake screening'}
               </Link>
             </>
           ) : (

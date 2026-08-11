@@ -104,11 +104,15 @@ export default function ProtectedRoute({ children }) {
         // ── All good ─────────────────────────────────────────────
         setIsFullySetUp(true);
 
-        // If a fully-set-up user somehow lands on /onboarding or /screening,
-        // push them straight to /dashboard.
+        const allowRetakeScreening =
+          location.pathname === '/screening' &&
+          (location.search.includes('retake=1') || location.state?.retake === true);
+
+        // If a fully-set-up user lands on /onboarding, or /screening without
+        // an explicit retake intent, push them straight to /dashboard.
         if (
           location.pathname === '/onboarding' ||
-          location.pathname === '/screening'
+          (location.pathname === '/screening' && !allowRetakeScreening)
         ) {
           setRedirect('/dashboard');
         }

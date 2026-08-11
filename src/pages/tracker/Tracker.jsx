@@ -6,14 +6,12 @@ import {
 } from 'recharts';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../lib/AuthContext';
+import { useTranslation } from 'react-i18next';
+import { trackerTranslations } from './translations';
 
 /* ═══════════════════════════════════════════════════════════
    CONSTANTS
 ═══════════════════════════════════════════════════════════ */
-const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-];
 const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 /* Symptom chips — keys written to symptom_logs.symptom */
@@ -110,7 +108,7 @@ async function getOrCreateUserId(authUser) {
 /* ═══════════════════════════════════════════════════════════
    CALENDAR GRID COMPONENT
 ═══════════════════════════════════════════════════════════ */
-function CalendarGrid({ year, month, selectedDate, periodDates, symptomDates, onSelectDate, onPrevMonth, onNextMonth }) {
+function CalendarGrid({ year, month, selectedDate, periodDates, symptomDates, onSelectDate, onPrevMonth, onNextMonth, tTracker }) {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDaySun = new Date(year, month, 1).getDay();   // 0 = Sun
   const firstDayMon = (firstDaySun + 6) % 7;               // convert to Mon-first: Mon=0, Sun=6
@@ -141,7 +139,7 @@ function CalendarGrid({ year, month, selectedDate, periodDates, symptomDates, on
             </svg>
           </button>
           <h3 className="font-heading text-base font-bold text-text px-1">
-            {MONTH_NAMES[month]} {year}
+            {tTracker(['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'][month])} {year}
           </h3>
           <button
             type="button"
@@ -158,11 +156,11 @@ function CalendarGrid({ year, month, selectedDate, periodDates, symptomDates, on
         <div className="flex items-center gap-3 text-xs text-text/50">
           <span className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-primary inline-block" />
-            Period
+            {tTracker('period')}
           </span>
           <span className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-secondary inline-block" />
-            Symptom
+            {tTracker('symptom')}
           </span>
         </div>
       </div>
@@ -221,14 +219,14 @@ function CalendarGrid({ year, month, selectedDate, periodDates, symptomDates, on
    key={selectedDate} is passed from parent so it remounts
    on date change, resetting local chip/severity state.
 ═══════════════════════════════════════════════════════════ */
-function LogPanel({ date, onSaveSymptoms, onMarkPeriod, globalSaving }) {
+function LogPanel({ date, onSaveSymptoms, onMarkPeriod, globalSaving, tTracker, lang }) {
   const [selected, setSelected] = useState([]);
   const [severity, setSeverity] = useState('Moderate');
   const [msg, setMsg] = useState('');
   const [saving, setSaving] = useState(false);
 
   const displayDate = date
-    ? new Date(date + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'long' })
+    ? new Date(date + 'T00:00:00').toLocaleDateString(lang === 'mr' ? 'mr-IN' : 'en-IN', { day: 'numeric', month: 'long' })
     : '';
 
   const toggle = (key) =>
@@ -240,19 +238,19 @@ function LogPanel({ date, onSaveSymptoms, onMarkPeriod, globalSaving }) {
   };
 
   const handleSave = async () => {
-    if (selected.length === 0) { flash('Select at least one symptom first.'); return; }
+    if (selected.length === 0) { flash(tTracker('select_symptom_first')); return; }
     setSaving(true);
     await onSaveSymptoms(date, selected, severity);
     setSaving(false);
     setSelected([]);
-    flash(`${selected.length} symptom${selected.length > 1 ? 's' : ''} saved!`);
+    flash(`${selected.length} ${selected.length > 1 ? tTracker('symptom_saved_plural') : tTracker('symptom_saved_single')}`);
   };
 
   const handlePeriod = async () => {
     setSaving(true);
     await onMarkPeriod(date);
     setSaving(false);
-    flash('Marked as period day!');
+    flash(tTracker('marked_period'));
   };
 
   const isDisabled = saving || globalSaving;
@@ -260,7 +258,7 @@ function LogPanel({ date, onSaveSymptoms, onMarkPeriod, globalSaving }) {
   return (
     <div>
       <h3 className="font-heading text-base font-bold text-text mb-4">
-        Log for {displayDate}
+        {tTracker('log_for')} {displayDate}
       </h3>
 
       {/* ── Symptom chips ── */}
@@ -278,13 +276,13 @@ function LogPanel({ date, onSaveSymptoms, onMarkPeriod, globalSaving }) {
                 : 'border-text/15 text-text/60 hover:border-primary/35 hover:bg-primary/5',
             ].join(' ')}
           >
-            {label}
+            {tTracker(key) || label}
           </button>
         ))}
       </div>
 
       {/* ── Severity selector ── */}
-      <p className="text-sm font-medium text-text/65 mb-2.5">How strong was it?</p>
+      <p className="text-sm font-medium text-text/65 mb-2.5">{tTracker('how_strong')}</p>
       <div className="flex gap-2 mb-5">
         {SEVERITY_OPTIONS.map(({ label }) => (
           <button
@@ -299,7 +297,7 @@ function LogPanel({ date, onSaveSymptoms, onMarkPeriod, globalSaving }) {
                 : 'border-text/15 text-text/60 hover:border-primary/35 bg-transparent',
             ].join(' ')}
           >
-            {label}
+            {tTracker(label.toLowerCase()) || label}
           </button>
         ))}
       </div>
@@ -322,7 +320,7 @@ function LogPanel({ date, onSaveSymptoms, onMarkPeriod, globalSaving }) {
                      hover:bg-accent/85 active:scale-[0.98] transition-all cursor-pointer
                      disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          Save symptoms
+          {tTracker('save_symptoms')}
         </button>
         <button
           type="button"
@@ -333,7 +331,7 @@ function LogPanel({ date, onSaveSymptoms, onMarkPeriod, globalSaving }) {
                      text-text/65 hover:bg-text/5 transition-all cursor-pointer
                      disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          Mark as period day
+          {tTracker('mark_period')}
         </button>
       </div>
     </div>
@@ -345,6 +343,13 @@ function LogPanel({ date, onSaveSymptoms, onMarkPeriod, globalSaving }) {
 ═══════════════════════════════════════════════════════════ */
 export default function Tracker() {
   const { user } = useAuth();
+  const { i18n } = useTranslation();
+  
+  const lang = i18n.language === 'mr' ? 'mr' : 'en';
+  const tTracker = useCallback((key) => {
+    return trackerTranslations[lang]?.[key] || trackerTranslations['en'][key] || key;
+  }, [lang]);
+
   const isDemo = !user;
 
   const now = new Date();
@@ -510,19 +515,32 @@ export default function Tracker() {
   /* ── Smart insight strings ── */
   const cycleInsight = (() => {
     if (cycleData.length < 2) {
-      return 'Log a few cycles with start and end dates to see your trend here.';
+      return tTracker('cycle_insight_empty');
     }
     const first = cycleData[0].length;
     const last = cycleData[cycleData.length - 1].length;
-    if (last < first) return "Under 35 days is the comfortable zone. Yours is trending down — that's good news.";
-    if (last > first) return 'Cycles have been a bit longer recently. Keep logging — patterns become clearer over time.';
-    return 'Your cycle length has been consistent over the last few months.';
+    if (last < first) return tTracker('cycle_insight_down');
+    if (last > first) return tTracker('cycle_insight_up');
+    return tTracker('cycle_insight_stable');
   })();
 
   const symptomInsight = (() => {
-    if (symptomData.length === 0) return 'Log symptoms to see which ones appear most often for you.';
-    const top = symptomData[0].name;
-    const second = symptomData[1]?.name;
+    if (symptomData.length === 0) return tTracker('symptom_insight_empty');
+    
+    const getTransName = (name) => {
+      const meta = SYMPTOM_CHIPS.find(s => s.label === name);
+      return meta ? tTracker(meta.key) : name;
+    };
+    
+    const top = getTransName(symptomData[0].name);
+    const second = symptomData[1] ? getTransName(symptomData[1].name) : null;
+    
+    if (lang === 'mr') {
+      return second
+        ? `${top} आणि ${second.toLowerCase()} तुमच्यासाठी सर्वात जास्त वेळा दिसतात.`
+        : `${top} तुमच्यासाठी सर्वात जास्त वेळा दिसते.`;
+    }
+    
     return second
       ? `${top} and ${second.toLowerCase()} show up most often for you.`
       : `${top} shows up most often for you.`;
@@ -537,10 +555,10 @@ export default function Tracker() {
       {/* ── Page heading ── */}
       <div className="mb-6">
         <h1 className="font-heading text-2xl sm:text-3xl font-bold text-text mb-1">
-          Cycle &amp; symptom tracker
+          {tTracker('page_title')}
         </h1>
         <p className="text-sm text-text/50">
-          Tap a date to log a period day or how you felt. Two minutes a week is enough to see a pattern.
+          {tTracker('page_subtitle')}
         </p>
       </div>
 
@@ -558,6 +576,7 @@ export default function Tracker() {
             onSelectDate={setSelectedDate}
             onPrevMonth={prevMonth}
             onNextMonth={nextMonth}
+            tTracker={tTracker}
           />
         </div>
 
@@ -569,6 +588,8 @@ export default function Tracker() {
             onSaveSymptoms={handleSaveSymptoms}
             onMarkPeriod={handleMarkPeriod}
             globalSaving={globalSaving}
+            tTracker={tTracker}
+            lang={lang}
           />
         </div>
       </div>
@@ -579,7 +600,7 @@ export default function Tracker() {
         {/* Cycle length line chart */}
         <div className="bg-white/65 backdrop-blur-sm border border-primary/15 rounded-[var(--radius-card)] p-5 shadow-sm">
           <h3 className="font-heading text-base font-bold text-text mb-1">
-            Cycle length over 6 months
+            {tTracker('cycle_chart_title')}
           </h3>
           <p className="text-xs text-primary mb-4 leading-relaxed">{cycleInsight}</p>
 
@@ -587,7 +608,7 @@ export default function Tracker() {
             <div className="h-44 flex flex-col items-center justify-center text-center gap-2">
               <span className="text-2xl">🌙</span>
               <p className="text-sm text-text/40 max-w-xs leading-relaxed">
-                Log cycles with a start and end date to see your trend.
+                {tTracker('cycle_empty_state')}
               </p>
             </div>
           ) : (
@@ -597,6 +618,11 @@ export default function Tracker() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#2E2A2808" vertical={false} />
                   <XAxis
                     dataKey="label"
+                    tickFormatter={(label) => {
+                      const idx = SHORT_MONTHS.indexOf(label);
+                      const keys = ['jan_short', 'feb_short', 'mar_short', 'apr_short', 'may_short', 'jun_short', 'jul_short', 'aug_short', 'sep_short', 'oct_short', 'nov_short', 'dec_short'];
+                      return idx >= 0 ? tTracker(keys[idx]) : label;
+                    }}
                     tick={{ fontSize: 11, fill: '#2E2A2865' }}
                     axisLine={false}
                     tickLine={false}
@@ -635,8 +661,8 @@ export default function Tracker() {
         {/* Symptom frequency bar chart */}
         <div className="bg-white/65 backdrop-blur-sm border border-primary/15 rounded-[var(--radius-card)] p-5 shadow-sm">
           <h3 className="font-heading text-base font-bold text-text mb-1">
-            Symptoms logged{' '}
-            <span className="text-text/40 font-normal text-sm">(last 90 days)</span>
+            {tTracker('symptoms_chart_title')}{' '}
+            <span className="text-text/40 font-normal text-sm">{tTracker('last_90_days')}</span>
           </h3>
           <p className="text-xs text-text/50 mb-4 leading-relaxed">{symptomInsight}</p>
 
@@ -644,7 +670,7 @@ export default function Tracker() {
             <div className="h-44 flex flex-col items-center justify-center text-center gap-2">
               <span className="text-2xl">📊</span>
               <p className="text-sm text-text/40 max-w-xs leading-relaxed">
-                Log symptoms to see your frequency chart.
+                {tTracker('symptom_empty_state')}
               </p>
             </div>
           ) : (
@@ -654,6 +680,10 @@ export default function Tracker() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#2E2A2808" vertical={false} />
                   <XAxis
                     dataKey="name"
+                    tickFormatter={(name) => {
+                      const meta = SYMPTOM_CHIPS.find(s => s.label === name);
+                      return meta ? tTracker(meta.key) : name;
+                    }}
                     tick={{ fontSize: 10, fill: '#2E2A2865' }}
                     axisLine={false}
                     tickLine={false}
@@ -686,9 +716,9 @@ export default function Tracker() {
       {/* ── Demo note ── */}
       {isDemo && (
         <p className="text-xs text-primary/70 mb-5">
-          Sample data seeded for{' '}
+          {tTracker('sample_data')}{' '}
           <a href="/login" className="underline hover:text-primary transition-colors">
-            this demo
+            {tTracker('this_demo')}
           </a>
         </p>
       )}
@@ -696,7 +726,7 @@ export default function Tracker() {
       {/* ── Footer disclaimer ── */}
       <footer className="border-t border-text/8 pt-4 pb-2">
         <p className="text-[11px] text-text/35 text-center">
-          Sakhi is a screening and support tool. It does not diagnose PCOS or replace a doctor.
+          {tTracker('disclaimer')}
         </p>
       </footer>
     </div>
