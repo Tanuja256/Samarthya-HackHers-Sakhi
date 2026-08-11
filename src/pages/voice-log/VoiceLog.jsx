@@ -14,7 +14,9 @@ export default function VoiceLog() {
   const [parsedData, setParsedData] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [supportError, setSupportError] = useState('');
+  const [extractFailed, setExtractFailed] = useState(false);
 
   const recognitionRef = useRef(null);
 
@@ -66,6 +68,8 @@ export default function VoiceLog() {
     if (!transcript.trim()) return;
     setIsProcessing(true);
     setSaveSuccess(false);
+    setSaveError('');
+    setExtractFailed(false);
     
     const prompt = `
       You are a medical data extraction assistant.
@@ -80,10 +84,20 @@ export default function VoiceLog() {
       Transcript: "${transcript}"
     `;
 
-    const data = await callGemini(prompt, { 
+    const FALLBACK = { symptoms: [], mood: null, energy: null };
+    const data = await callGemini(prompt, {
       jsonMode: true,
-      fallbackData: { symptoms: [], mood: null, energy: null } 
+      fallbackData: FALLBACK,
     });
+
+    // Detect fallback: all three fields are at their default empty state
+    const isFallback = (data?.symptoms?.length ?? 0) === 0
+      && data?.mood === null
+      && data?.energy === null;
+    // Only flag as failure if the transcript actually had content to parse
+    if (isFallback && transcript.trim().length > 10) {
+      setExtractFailed(true);
+    }
 
     setParsedData(data);
     setIsProcessing(false);
@@ -92,40 +106,83 @@ export default function VoiceLog() {
   const handleSave = async () => {
     if (!user || !parsedData) return;
     setIsSaving(true);
-    
-    const today = new Date().toISOString().split('T')[0];
 
-    try {
-      if (parsedData.symptoms && parsedData.symptoms.length > 0) {
-        const symptomInserts = parsedData.symptoms.map(s => ({
-          user_id: user.id,
-          date: today,
-          symptom: s,
-          severity: 'moderate',
-          source: 'voice'
-        }));
-        await supabase.from('symptom_logs').insert(symptomInserts);
+    // Resolve the internal public.users.id (FK target) — NOT auth user.id
+    // symptom_logs.user_id and mood_logs.user_id both reference public.users(id)
+    const { data: userRow, error: userErr } = await supabase
+      .from('users')
+      .select('id')
+      .eq('auth_id', user.id)
+      .single();
+
+    if (userErr || !userRow?.id) {
+      console.error('[VoiceLog] Could not resolve internal user id:', userErr);
+      setSaveError('Could not save — please try again.');
+      setIsSaving(false);
+      return;
+    }
+
+    const internalUserId = userRow.id;
+    // Use a full ISO timestamp for logged_at (schema: TIMESTAMPTZ, no `date` column)
+    const loggedAt = new Date().toISOString();
+
+    let hasError = false;
+
+    // --- symptom_logs ---
+    // severity schema: INTEGER CHECK (severity BETWEEN 1 AND 5) — map string → int
+    if (parsedData.symptoms?.length > 0) {
+      const symptomInserts = parsedData.symptoms.map((s) => ({
+        user_id: internalUserId,
+        symptom: s,
+        severity: 3,           // 'moderate' maps to 3 (mid of 1–5 scale)
+        logged_at: loggedAt,   // correct column name (not `date`)
+        source: 'voice',       // schema has: source TEXT CHECK (source IN ('manual','voice'))
+      }));
+
+      console.log('[VoiceLog] Inserting symptom_logs:', symptomInserts);
+      const { error: sErr } = await supabase.from('symptom_logs').insert(symptomInserts);
+      if (sErr) {
+        console.error('[VoiceLog] symptom_logs insert error:', sErr);
+        hasError = true;
       }
+    }
 
-      if (parsedData.mood || parsedData.energy) {
-        await supabase.from('mood_logs').insert({
-          user_id: user.id,
-          date: today,
-          mood: parsedData.mood,
-          energy_level: parsedData.energy,
-          source: 'voice'
-        });
+    // --- mood_logs ---
+    // mood_logs schema: mood TEXT NOT NULL, energy_level INTEGER CHECK (1–5)
+    // No `source` column, no `date` column — use logged_at (TIMESTAMPTZ)
+    if (parsedData.mood || parsedData.energy) {
+      // Map Gemini's free-text energy string to the 1–5 integer the schema requires
+      const energyMap = { high: 5, good: 4, moderate: 3, low: 2, very_low: 1, exhausted: 1 };
+      const energyStr = (parsedData.energy ?? '').toLowerCase().replace(/\s+/g, '_');
+      const energyInt = energyMap[energyStr] ?? 3; // default to 3 if unmapped
+
+      const moodRow = {
+        user_id: internalUserId,
+        mood: parsedData.mood ?? 'unspecified',  // NOT NULL in schema
+        energy_level: parsedData.energy ? energyInt : null,
+        logged_at: loggedAt,   // correct column name (not `date`)
+        // No `source` column in mood_logs
+      };
+
+      console.log('[VoiceLog] Inserting mood_logs:', moodRow);
+      const { error: mErr } = await supabase.from('mood_logs').insert(moodRow);
+      if (mErr) {
+        console.error('[VoiceLog] mood_logs insert error:', mErr);
+        hasError = true;
       }
+    }
 
+    if (hasError) {
+      setSaveError('Some entries could not be saved. Check the console for details.');
+    } else {
       setSaveSuccess(true);
       setTranscript('');
       setParsedData(null);
-    } catch (err) {
-      console.error('Error saving logs', err);
-    } finally {
-      setIsSaving(false);
     }
+
+    setIsSaving(false);
   };
+
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 font-body">
@@ -210,6 +267,20 @@ export default function VoiceLog() {
                 <div className="flex-1 flex flex-col justify-between animate-fade-in">
                   <div>
                     <p className="text-sm text-text/70 mb-4 italic">"{transcript}"</p>
+
+                    {/* Visible error when AI extraction failed */}
+                    {extractFailed && (
+                      <div className="mb-3 flex items-center gap-2 bg-warning/10 border border-warning/25 text-warning rounded-xl px-3 py-2 text-xs font-medium">
+                        <span>⚠️</span>
+                        <span>Couldn't extract tags right now — try again or type your entry instead.</span>
+                        <button
+                          onClick={processTranscript}
+                          className="ml-auto underline hover:no-underline text-warning/80 cursor-pointer"
+                        >
+                          Retry
+                        </button>
+                      </div>
+                    )}
                     
                     <div className="space-y-4 mb-6 bg-primary/5 p-4 rounded-xl border border-primary/10">
                       <div>
@@ -259,6 +330,12 @@ export default function VoiceLog() {
       {saveSuccess && (
         <div className="mt-6 bg-secondary/10 text-secondary border border-secondary/20 p-4 rounded-[var(--radius-button)] text-center animate-fade-in font-medium">
           {t('voice_save_success')}
+        </div>
+      )}
+
+      {saveError && (
+        <div className="mt-4 bg-warning/10 text-warning border border-warning/20 p-4 rounded-[var(--radius-button)] text-center text-sm font-medium">
+          ⚠️ {saveError}
         </div>
       )}
 

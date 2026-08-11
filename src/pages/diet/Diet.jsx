@@ -118,6 +118,7 @@ export default function Diet() {
   const [tweakResult, setTweakResult] = useState('');
   const [tweakLoading, setTweakLoading] = useState(false);
   const [tweakSaved, setTweakSaved] = useState(false);
+  const [tweakFailed, setTweakFailed] = useState(false);
 
   const toggleDish = (id) => {
     setSelectedDishes((prev) =>
@@ -138,17 +139,20 @@ export default function Diet() {
     setTweakLoading(true);
     setTweakResult('');
     setTweakSaved(false);
+    setTweakFailed(false);
 
     const dishNames = getSelectedLabels().join(', ');
     const prompt = `The user has PCOS and is from Maharashtra, India. Their family is cooking the following dishes today: ${dishNames}.
 Give ONE short, practical, friendly tweak (1-2 lines max) to make this meal more PCOS-friendly. Don't suggest a whole new meal — just a small adjustment. Respond ONLY with the tweak.`;
 
-    let tweak = '';
-    try {
-      tweak = await callGemini(prompt);
-    } catch (err) {
-      console.warn('[Diet] Gemini call failed, using fallback tip:', err.message);
-      // Basic context-aware fallback
+    // callGemini never throws — it returns fallbackMessage on any failure.
+    // Use a sentinel value to detect fallback vs real AI response.
+    const FALLBACK_SENTINEL = '__DIET_FALLBACK__';
+    let tweak = await callGemini(prompt, { fallbackMessage: FALLBACK_SENTINEL });
+
+    if (tweak === FALLBACK_SENTINEL) {
+      // AI failed — show a context-aware local tip and surface the error
+      setTweakFailed(true);
       if (selectedDishes.includes('rice') && !selectedDishes.includes('salad')) tweak = FALLBACK_TIPS[4];
       else if (selectedDishes.includes('roti') || selectedDishes.includes('bhakri')) tweak = FALLBACK_TIPS[1];
       else if (!selectedDishes.includes('curd')) tweak = FALLBACK_TIPS[3];
@@ -239,8 +243,21 @@ Give ONE short, practical, friendly tweak (1-2 lines max) to make this meal more
           )}
         </button>
 
+        {tweakFailed && tweakResult && (
+          <div className="mt-4 flex items-center gap-2 bg-warning/10 border border-warning/25 text-warning rounded-xl px-4 py-2.5 text-[13px] font-medium">
+            <span>⚠️</span>
+            <span>Couldn't reach the AI — showing a general tip instead.</span>
+            <button
+              onClick={handleGetTweak}
+              className="ml-auto underline hover:no-underline text-warning/80 cursor-pointer"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
         {tweakResult && (
-          <div className="mt-6 p-5 bg-white border border-[#f5e3df] rounded-2xl animate-[fadeIn_0.3s_ease-out]">
+          <div className="mt-4 p-5 bg-white border border-[#f5e3df] rounded-2xl animate-[fadeIn_0.3s_ease-out]">
             <p className="text-[14.5px] text-text/80 leading-relaxed">{tweakResult}</p>
           </div>
         )}

@@ -1,5 +1,88 @@
+import { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+
+/* ── Video sources served from public/video/ ── */
+const VIDEOS = {
+  en: '/video/pcos-explainer-en.mp4',
+  mr: '/video/pcos-explainer-mr.mp4',
+};
+
+/* ══════════════════════════════════════════════════════════
+   VIDEO EXPLAINER — bilingual player with local lang toggle
+   Only touches the video card; does not affect global i18n.
+══════════════════════════════════════════════════════════ */
+function VideoExplainer({ t }) {
+  const [lang, setLang] = useState('en');
+  const videoRef = useRef(null);
+
+  const switchLang = (next) => {
+    if (next === lang) return;
+    // Pause current video before swapping — prevents both playing at once
+    if (videoRef.current) {
+      videoRef.current.pause();
+    }
+    setLang(next);
+  };
+
+  return (
+    <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+      <div className="bg-white/60 border border-text/8 rounded-[var(--radius-card)] p-6 sm:p-8 hover:shadow-md transition-all duration-200">
+
+        {/* ── Top: Copy & Toggle ── */}
+        <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
+          <div className="max-w-2xl">
+            <h2 className="font-heading text-2xl sm:text-3xl font-bold text-text mb-2">
+              {t('landing_video_title')}
+            </h2>
+            <p className="text-xs sm:text-sm text-text/50 leading-relaxed">
+              {t('landing_video_subtitle')}
+            </p>
+          </div>
+
+          {/* Language toggle — compact pill, top-right */}
+          <div
+            role="group"
+            aria-label="Video language"
+            className="inline-flex rounded-full bg-text/6 p-0.5 gap-0.5 flex-shrink-0"
+          >
+            {[{ key: 'en', label: 'English' }, { key: 'mr', label: 'मराठी' }].map(({ key, label }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => switchLang(key)}
+                aria-pressed={lang === key}
+                className={[
+                  'px-3 py-1 rounded-full text-[11px] font-semibold transition-all duration-200 cursor-pointer leading-none',
+                  lang === key
+                    ? 'bg-white text-text shadow-sm'
+                    : 'text-text/45 hover:text-text/70',
+                ].join(' ')}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Bottom: Real <video> player ── */}
+        <div className="w-full aspect-video rounded-xl overflow-hidden bg-black/5 border border-text/8">
+          <video
+            key={lang}
+            ref={videoRef}
+            src={VIDEOS[lang]}
+            controls
+            preload="metadata"
+            playsInline
+            className="w-full h-full object-contain rounded-xl"
+            aria-label={lang === 'en' ? 'PCOS explainer video in English' : 'PCOS explainer video in Marathi'}
+          />
+        </div>
+
+      </div>
+    </section>
+  );
+}
 
 export default function Landing() {
   const { t } = useTranslation();
@@ -10,7 +93,7 @@ export default function Landing() {
       {/* ══════════════════════════════════════════════════════════
           HERO — Two-column: copy + stats
          ══════════════════════════════════════════════════════════ */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 sm:pt-16 pb-12">
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 sm:pt-14 pb-8 sm:pb-10">
         {/* Audience tag */}
         <p className="text-xs text-text/45 font-medium mb-5 tracking-wide">
           {t('landing_audience_tag')}
@@ -19,7 +102,7 @@ export default function Landing() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-start">
           {/* ── Left: Copy ── */}
           <div>
-            <h1 className="font-heading text-3xl sm:text-4xl lg:text-[2.65rem] font-bold text-text leading-[1.15] mb-6">
+            <h1 className="font-heading text-3xl sm:text-4xl lg:text-[2.5rem] font-bold text-text leading-[1.15] mb-6">
               {t('landing_hero_line1')}{' '}
               <span className="text-primary">{t('landing_hero_line2')}</span>
             </h1>
@@ -52,10 +135,10 @@ export default function Landing() {
           </div>
 
           {/* ── Right: Stats Cards ── */}
-          <div className="space-y-4">
+          <div className="space-y-5">
             {/* Main stat: 1 in 5 */}
-            <div className="bg-white/60 backdrop-blur-sm border border-primary/12 rounded-[var(--radius-card)] p-6 sm:p-7">
-              <p className="font-heading text-4xl sm:text-5xl font-bold text-primary mb-2">
+            <div className="bg-white/60 border border-text/8 rounded-[var(--radius-card)] p-6 sm:p-8 hover:shadow-md transition-all duration-200">
+              <p className="font-heading text-3xl sm:text-4xl font-bold text-primary mb-2">
                 {t('landing_stat_1_in_5')}
               </p>
               <p className="text-sm text-text/60 leading-relaxed">
@@ -64,17 +147,17 @@ export default function Landing() {
             </div>
 
             {/* Two smaller stats */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-primary/6 border border-primary/10 rounded-[var(--radius-card)] p-5">
-                <p className="font-heading text-2xl sm:text-3xl font-bold text-primary mb-1">
+            <div className="grid grid-cols-2 gap-5">
+              <div className="bg-primary/5 border border-text/8 rounded-[var(--radius-card)] p-6 hover:shadow-md transition-all duration-200">
+                <p className="font-heading text-2xl font-bold text-primary mb-1">
                   22.5%
                 </p>
                 <p className="text-xs text-text/50 leading-relaxed">
                   {t('landing_stat_prevalence')}
                 </p>
               </div>
-              <div className="bg-primary/6 border border-primary/10 rounded-[var(--radius-card)] p-5">
-                <p className="font-heading text-2xl sm:text-3xl font-bold text-primary mb-1">
+              <div className="bg-primary/5 border border-text/8 rounded-[var(--radius-card)] p-6 hover:shadow-md transition-all duration-200">
+                <p className="font-heading text-2xl font-bold text-primary mb-1">
                   4.5 yrs
                 </p>
                 <p className="text-xs text-text/50 leading-relaxed">
@@ -89,7 +172,7 @@ export default function Landing() {
       {/* ══════════════════════════════════════════════════════════
           WHAT IS PCOS?
          ══════════════════════════════════════════════════════════ */}
-      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
         <h2 className="font-heading text-2xl sm:text-3xl font-bold text-text mb-4">
           {t('landing_what_title')}
         </h2>
@@ -140,35 +223,8 @@ export default function Landing() {
       {/* ══════════════════════════════════════════════════════════
           VIDEO SECTION
          ══════════════════════════════════════════════════════════ */}
-      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
-        <div className="bg-white/50 border border-text/8 rounded-[var(--radius-card)] p-6 sm:p-8">
-          <span className="inline-block px-3 py-1 rounded-full text-[11px] font-semibold bg-text/8 text-text/50 mb-3">
-            {t('landing_video_badge')}
-          </span>
+      <VideoExplainer t={t} />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
-            <div>
-              <h2 className="font-heading text-xl sm:text-2xl font-bold text-text mb-2">
-                {t('landing_video_title')}
-              </h2>
-              <p className="text-xs sm:text-sm text-text/50 leading-relaxed">
-                {t('landing_video_subtitle')}
-              </p>
-            </div>
-
-            {/* Video placeholder */}
-            <div className="aspect-video bg-background rounded-xl border-2 border-dashed border-text/10
-                            flex flex-col items-center justify-center text-text/30 gap-2">
-              <div className="w-14 h-14 rounded-full bg-text/5 flex items-center justify-center">
-                <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-              </div>
-              <p className="text-[11px]">{t('landing_video_placeholder')}</p>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* ══════════════════════════════════════════════════════════
           BRANDED FOOTER
