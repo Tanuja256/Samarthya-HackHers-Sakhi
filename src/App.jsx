@@ -8,7 +8,7 @@ import Signup from './pages/auth/Signup';
 import FamilyExplainer from './pages/family-explainer/FamilyExplainer';
 
 import Onboarding from './pages/onboarding/Onboarding';
-import Screening, { VideoSummaryPlaceholder } from './pages/screening/Screening';
+import Screening from './pages/screening/Screening';
 import Dashboard from './pages/dashboard/Dashboard';
 import Tracker from './pages/tracker/Tracker';
 import VoiceLog from './pages/voice-log/VoiceLog';
@@ -50,14 +50,6 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Screening />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/screening/video-summary"
-            element={
-              <ProtectedRoute>
-                <VideoSummaryPlaceholder />
               </ProtectedRoute>
             }
           />

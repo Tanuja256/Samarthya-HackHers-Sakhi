@@ -1,7 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { callGemini } from '../../lib/callGemini';
 import { extractLabValuesFromImage } from './callGeminiVision';
+import { generateSpeech } from './callGeminiTTS';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../lib/AuthContext';
 import BackButton from '../../components/BackButton';
@@ -27,9 +28,10 @@ function visionToFields(extracted) {
 }
 
 export default function LabReport() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const fileInputRef = useRef(null);
+  const lastAnalyzedValuesRef = useRef(null);
 
   /* ── Lab value inputs ── */
   const [values, setValues] = useState({
@@ -49,6 +51,11 @@ export default function LabReport() {
   const [explanation, setExplanation]       = useState('');
   const [doctorQuestions, setDoctorQuestions] = useState([]);
   const [usedFallback, setUsedFallback]     = useState(null);   // null | true | false
+
+  /* ── Audio state ── */
+  const [audioUrl, setAudioUrl]             = useState('');
+  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
+  const [audioError, setAudioError]         = useState('');
 
   /* ─────────────────────────────────────────────────────────────
      FIELD CHANGE
@@ -129,6 +136,8 @@ export default function LabReport() {
     setExplanation('');
     setDoctorQuestions([]);
     setUsedFallback(null);
+    setAudioUrl('');
+    setAudioError('');
 
     const filledVals = Object.entries(values)
       .filter(([_, v]) => String(v).trim() !== '')
@@ -140,9 +149,14 @@ export default function LabReport() {
       return;
     }
 
+    const langInstruction = i18n.language === 'mr'
+      ? "Respond entirely in Marathi (मराठी), including all section headings and the doctor questions list."
+      : "Respond in English.";
+
     const prompt = `The user has provided these lab values: ${filledVals}.
 Explain what these numbers mean in simple terms, focusing on common PCOS patterns. Do not diagnose.
 Include 2-3 questions they can ask their doctor.
+${langInstruction}
 Return ONLY valid JSON in this exact format:
 {
   "explanation": "Simple explanation text...",
@@ -164,6 +178,7 @@ Return ONLY valid JSON in this exact format:
       'We analyzed your report, but please review it with your doctor for a proper interpretation.'
     );
     setDoctorQuestions(data?.doctorQuestions ?? []);
+    lastAnalyzedValuesRef.current = { ...values };
 
     /* ── Save to lab_reports (schema.sql) — only on real Gemini data ── */
     if (user && !isFallback) {
@@ -194,6 +209,41 @@ Return ONLY valid JSON in this exact format:
     }
 
     setAnalyzing(false);
+  };
+
+  // Trigger regeneration on language toggle
+  const lastLanguageRef = useRef(i18n.language);
+  const handleAnalyzeRef = useRef(handleAnalyze);
+  handleAnalyzeRef.current = handleAnalyze;
+
+  useEffect(() => {
+    const langChanged = i18n.language !== lastLanguageRef.current;
+    if (langChanged) {
+      lastLanguageRef.current = i18n.language;
+      const hasExplanation = !!explanation;
+      const valuesMatch = lastAnalyzedValuesRef.current && 
+        Object.keys(values).every(key => values[key] === lastAnalyzedValuesRef.current[key]);
+
+      if (hasExplanation && valuesMatch) {
+        handleAnalyzeRef.current();
+      }
+    }
+  }, [i18n.language, values, explanation]);
+
+  /* ─────────────────────────────────────────────────────────────
+     AUDIO GENERATION
+  ───────────────────────────────────────────────────────────── */
+  const handleListen = async () => {
+    if (!explanation) return;
+    setIsGeneratingAudio(true);
+    setAudioError('');
+    const { url, error } = await generateSpeech(explanation, i18n.language);
+    if (url) {
+      setAudioUrl(url);
+    } else {
+      setAudioError(error || "Couldn't generate audio, please try again.");
+    }
+    setIsGeneratingAudio(false);
   };
 
   /* ─────────────────────────────────────────────────────────────
@@ -417,6 +467,43 @@ Return ONLY valid JSON in this exact format:
                     </ul>
                   </>
                 )}
+
+                {/* ── Audio Narration UI ── */}
+                <div className="mt-8 pt-6 border-t border-text/5">
+                  {!audioUrl && !isGeneratingAudio && (
+                    <button
+                      onClick={handleListen}
+                      className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#fcf5f3] hover:bg-[#f9eeeb]
+                                 border border-[#f5e3df] text-[13.5px] font-medium text-[#8a5a52] transition-colors cursor-pointer"
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                      </svg>
+                      Listen to summary
+                    </button>
+                  )}
+                  {isGeneratingAudio && (
+                    <div className="flex items-center gap-3 text-primary">
+                      <span className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin flex-shrink-0" />
+                      <p className="text-[13.5px] font-medium">Generating audio…</p>
+                    </div>
+                  )}
+                  {audioUrl && (
+                    <div className="animate-[fadeIn_0.3s_ease-out]">
+                      <p className="text-[13px] text-text/60 font-medium mb-2 pl-1">Listen to summary:</p>
+                      <audio controls className="w-full h-11" src={audioUrl}>
+                        Your browser does not support the audio element.
+                      </audio>
+                    </div>
+                  )}
+                  {audioError && (
+                    <p className="mt-3 text-[13px] text-warning font-medium flex items-center gap-2">
+                      ⚠️ {audioError}
+                    </p>
+                  )}
+                </div>
               </div>
             )}
           </div>
