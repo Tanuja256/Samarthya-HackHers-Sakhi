@@ -143,7 +143,7 @@ export default function Dashboard() {
 
   const userName = profile?.name;
   const greeting = userName
-    ? `Namaskar, ${userName}`
+    ? t('dashboard_greeting', { name: userName })
     : t('dashboard_greeting_default');
 
   // Placeholder data — will be replaced with real Supabase queries

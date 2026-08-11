@@ -82,7 +82,6 @@
   "onboarding_finish": "स्क्रीनिंग सुरू करा →",
   "onboarding_saving": "सेव्ह करत आहे...",
   "dashboard_greeting": "नमस्कार, {{name}}",
-  "dashboard_greeting_default": "नमस्कार 🙏",
   "dashboard_subtitle": "आज गोष्टी कशा दिसतात ते पहा. छोट्या नोंदी एक स्पष्ट चित्र तयार करतात.",
   "dashboard_risk_title": "तुमचा जोखीम सारांश",
   "dashboard_risk_placeholder": "तुमची जोखीम पातळी पाहण्यासाठी स्क्रीनिंग पूर्ण करा.",

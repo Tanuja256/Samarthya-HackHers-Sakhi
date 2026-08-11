@@ -82,7 +82,6 @@
   "onboarding_finish": "Start Screening →",
   "onboarding_saving": "Saving...",
   "dashboard_greeting": "Namaskar, {{name}}",
-  "dashboard_greeting_default": "Namaskar 🙏",
   "dashboard_subtitle": "Here's how things look today. Small notes add up to a clear picture.",
   "dashboard_risk_title": "Your Risk Summary",
   "dashboard_risk_placeholder": "Complete the screening to see your risk tier here.",
