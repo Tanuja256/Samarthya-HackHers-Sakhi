@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
 import { callGemini } from '../../lib/callGemini';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../lib/AuthContext';
@@ -9,62 +10,34 @@ import BackButton from '../../components/BackButton';
 /* ══════════════════════════════════════════════════════════════════
    STATIC DATA — Weekly Meal Plan
    ══════════════════════════════════════════════════════════════════ */
-const WEEKLY_PLAN = [
+const getWeeklyPlan = (t) => [
   {
-    day: 'Monday',
-    meals: [
-      'Poha with peanuts + a handful of sprouts',
-      '2 jowar bhakri, methi sabzi, dahi',
-      'Moong dal khichdi, cucumber koshimbir'
-    ]
+    day: t('diet_day_1'),
+    meals: [t('diet_day_1_m1'), t('diet_day_1_m2'), t('diet_day_1_m3')]
   },
   {
-    day: 'Tuesday',
-    meals: [
-      'Besan chilla with mint chutney',
-      'Bajra bhakri, palak-chana sabzi, salad',
-      'Masoor dal, half bowl rice, bhendi sabzi'
-    ]
+    day: t('diet_day_2'),
+    meals: [t('diet_day_2_m1'), t('diet_day_2_m2'), t('diet_day_2_m3')]
   },
   {
-    day: 'Wednesday',
-    meals: [
-      'Upma with extra vegetables',
-      'Jowar bhakri, shepu bhaji, buttermilk',
-      'Vegetable thalipeeth, curd'
-    ]
+    day: t('diet_day_3'),
+    meals: [t('diet_day_3_m1'), t('diet_day_3_m2'), t('diet_day_3_m3')]
   },
   {
-    day: 'Thursday',
-    meals: [
-      'Sprouts usal + one boiled egg or paneer',
-      'Rajma, half bowl brown rice, kachumber',
-      'Bajra khichdi, ambat varan'
-    ]
+    day: t('diet_day_4'),
+    meals: [t('diet_day_4_m1'), t('diet_day_4_m2'), t('diet_day_4_m3')]
   },
   {
-    day: 'Friday',
-    meals: [
-      'Oats with milk, banana and flaxseed',
-      'Jowar bhakri, vangi bhaji, dahi',
-      'Toor dal, roti, dudhi sabzi'
-    ]
+    day: t('diet_day_5'),
+    meals: [t('diet_day_5_m1'), t('diet_day_5_m2'), t('diet_day_5_m3')]
   },
   {
-    day: 'Saturday',
-    meals: [
-      'Moong dal dosa',
-      'Bhakri, matki usal, salad',
-      'Vegetable pulao with raita'
-    ]
+    day: t('diet_day_6'),
+    meals: [t('diet_day_6_m1'), t('diet_day_6_m2'), t('diet_day_6_m3')]
   },
   {
-    day: 'Sunday',
-    meals: [
-      'Idli with sambar',
-      'Family meal — smaller rice portion, extra sabzi',
-      'Soup and paneer/chana bhurji'
-    ]
+    day: t('diet_day_7'),
+    meals: [t('diet_day_7_m1'), t('diet_day_7_m2'), t('diet_day_7_m3')]
   },
 ];
 
@@ -91,17 +64,17 @@ const MEAL_ICONS = [MorningIcon, SunIcon, MoonIcon];
 /* ══════════════════════════════════════════════════════════════════
    FAMILY-PLATE GUIDANCE
    ══════════════════════════════════════════════════════════════════ */
-const DISH_OPTIONS = [
-  { id: 'dal', label: 'Dal' },
-  { id: 'rice', label: 'Rice' },
-  { id: 'roti', label: 'Roti / Chapati' },
-  { id: 'bhakri', label: 'Jowar bhakri' },
-  { id: 'sabzi', label: 'Sabzi' },
-  { id: 'curd', label: 'Curd / Dahi' },
-  { id: 'pickle', label: 'Pickle' },
-  { id: 'fried', label: 'Fried item' },
-  { id: 'sweet', label: 'Sweet' },
-  { id: 'salad', label: 'Salad' },
+const getDishOptions = (t) => [
+  { id: 'dal', label: t('diet_dish_dal') },
+  { id: 'rice', label: t('diet_dish_rice') },
+  { id: 'roti', label: t('diet_dish_roti') },
+  { id: 'bhakri', label: t('diet_dish_bhakri') },
+  { id: 'sabzi', label: t('diet_dish_sabzi') },
+  { id: 'curd', label: t('diet_dish_curd') },
+  { id: 'pickle', label: t('diet_dish_pickle') },
+  { id: 'fried', label: t('diet_dish_fried') },
+  { id: 'sweet', label: t('diet_dish_sweet') },
+  { id: 'salad', label: t('diet_dish_salad') },
 ];
 
 const FALLBACK_TIPS = [
@@ -115,6 +88,17 @@ const FALLBACK_TIPS = [
 export default function Diet() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const location = useLocation();
+
+  // Scroll to base-week section when navigated from Festival page
+  useEffect(() => {
+    if (location.state?.scrollTo === 'base-week') {
+      const el = document.getElementById('base-week');
+      if (el) {
+        setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+      }
+    }
+  }, [location.state]);
 
   const [selectedDishes, setSelectedDishes] = useState([]);
   const [tweakResult, setTweakResult] = useState('');
@@ -132,7 +116,7 @@ export default function Diet() {
 
   const getSelectedLabels = () =>
     selectedDishes
-      .map((id) => DISH_OPTIONS.find((d) => d.id === id)?.label)
+      .map((id) => getDishOptions(t).find((d) => d.id === id)?.label)
       .filter(Boolean);
 
   const handleGetTweak = async () => {
@@ -194,29 +178,29 @@ Give ONE short, practical, friendly tweak (1-2 lines max) to make this meal more
       {/* ── Page Header ── */}
       <div className="flex items-center justify-between mb-2">
         <h1 className="font-heading text-3xl font-bold text-text">
-          Eating well, without a separate kitchen
+          {t('diet_page_title')}
         </h1>
         <BackButton />
       </div>
       <p className="text-[15px] text-text/60 mb-10">
-        You don't need special food. You need the same home food, arranged a little differently.
+        {t('diet_page_subtitle')}
       </p>
 
       {/* ── Family Plate Section ── */}
       <section className="bg-[#fcf5f3] rounded-[20px] p-8 mb-16 border border-[#f5e3df]">
         <div className="inline-block bg-[#f5e3df] text-[#b87c71] text-[11px] font-bold px-2.5 py-0.5 rounded-md uppercase tracking-wider mb-5">
-          Family plate
+          {t('diet_family_plate_badge')}
         </div>
 
         <h2 className="font-heading text-xl font-bold text-text mb-2">
-          What's cooking at home today?
+          {t('diet_plate_title')}
         </h2>
         <p className="text-sm text-text/60 mb-6">
-          Tick whatever your family is making. Sakhi will tell you how to build your plate from it.
+          {t('diet_family_plate_desc')}
         </p>
 
         <div className="flex flex-wrap gap-2.5 mb-8">
-          {DISH_OPTIONS.map(({ id, label }) => {
+          {getDishOptions(t).map(({ id, label }) => {
             const selected = selectedDishes.includes(id);
             return (
               <button
@@ -242,21 +226,21 @@ Give ONE short, practical, friendly tweak (1-2 lines max) to make this meal more
                      disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center gap-2"
         >
           {tweakLoading ? (
-            <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Loading...</>
+            <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {t('diet_loading_btn')}</>
           ) : (
-            'Get today\'s guidance'
+            t('diet_get_guidance_btn')
           )}
         </button>
 
         {tweakFailed && tweakResult && (
           <div className="mt-4 flex items-center gap-2 bg-warning/10 border border-warning/25 text-warning rounded-xl px-4 py-2.5 text-[13px] font-medium">
             <span>⚠️</span>
-            <span>Couldn't reach the AI — showing a general tip instead.</span>
+            <span>{t('diet_ai_error')}</span>
             <button
               onClick={handleGetTweak}
               className="ml-auto underline hover:no-underline text-warning/80 cursor-pointer"
             >
-              Retry
+              {t('diet_retry')}
             </button>
           </div>
         )}
@@ -269,16 +253,16 @@ Give ONE short, practical, friendly tweak (1-2 lines max) to make this meal more
       </section>
 
       {/* ── Base Week Section ── */}
-      <section>
+      <section id="base-week">
         <h2 className="font-heading text-xl font-bold text-text mb-2">
-          Your base week
+          {t('diet_base_week_title')}
         </h2>
         <p className="text-sm text-text/60 mb-8">
-          Built on jowar, bajra, dal and leafy greens — nothing imported, nothing expensive.
+          {t('diet_base_week_desc')}
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {WEEKLY_PLAN.map((dayPlan) => (
+          {getWeeklyPlan(t).map((dayPlan) => (
             <div key={dayPlan.day} className="bg-white border border-text/10 rounded-2xl p-6 hover:shadow-sm transition-shadow">
               <h3 className="font-heading font-bold text-[15px] text-text mb-4">{dayPlan.day}</h3>
               <div className="flex flex-col gap-3.5">
@@ -300,7 +284,7 @@ Give ONE short, practical, friendly tweak (1-2 lines max) to make this meal more
       {/* ── Footer Disclaimer ── */}
       <footer className="mt-16 border-t border-text/5 pt-6 pb-4">
         <p className="text-[11px] text-text/40">
-          General wellness guidance, not a prescribed medical diet. If you have diabetes, thyroid issues or are pregnant, please check with your doctor or dietitian.
+          {t('diet_footer')}
         </p>
       </footer>
     </div>

@@ -7,11 +7,11 @@ import { useAuth } from '../../lib/AuthContext';
 import BackButton from '../../components/BackButton';
 
 /* ── Field definitions ── */
-const LAB_FIELDS = [
-  { key: 'lh',             label: 'LH',                unit: 'IU/L'    },
-  { key: 'fsh',            label: 'FSH',               unit: 'IU/L'    },
-  { key: 'testosterone',   label: 'Total testosterone', unit: 'ng/dL'   },
-  { key: 'fasting_insulin',label: 'Fasting insulin',   unit: 'µIU/mL'  },
+const getLabFields = (t) => [
+  { key: 'lh',             label: t('lab_report_lh'),                unit: 'IU/L'    },
+  { key: 'fsh',            label: t('lab_report_fsh'),               unit: 'IU/L'    },
+  { key: 'testosterone',   label: t('lab_report_testosterone'), unit: 'ng/dL'   },
+  { key: 'fasting_insulin',label: t('lab_report_insulin'),   unit: 'µIU/mL'  },
 ];
 
 /* ── Map vision keys → field keys ── */
@@ -92,7 +92,7 @@ export default function LabReport() {
       if (uploadError) {
         console.error('[LabReport] Storage upload error:', uploadError);
         // Non-fatal: we can still extract from the local File
-        setExtractError('Image upload failed — you can still extract values from your local file.');
+        setExtractError(t('lab_report_upload_error'));
       } else {
         setUploadedStoragePath(storagePath);
       }
@@ -105,10 +105,7 @@ export default function LabReport() {
 
     if (allNull) {
       // Gemini returned all nulls — image was not a recognisable lab report
-      setExtractError(
-        'Could not find LH, FSH, testosterone, or fasting insulin values in this image. ' +
-        'Make sure the report is clear and well-lit, or type the values manually below.'
-      );
+      setExtractError(t('lab_report_extract_error'));
       // Don't overwrite whatever the user has already typed
     } else {
       // Populate fields with extracted values (editable — not read-only)
@@ -210,12 +207,12 @@ Return ONLY valid JSON in this exact format:
       {/* ── Page Header ── */}
       <div className="flex items-center justify-between mb-2">
         <h1 className="font-heading text-3xl font-bold text-text">
-          Lab report translator
+          {t('lab_title')}
         </h1>
         <BackButton />
       </div>
       <p className="text-[15px] text-text/60 mb-10">
-        Your report is written for doctors. Here's the same thing, written for you.
+        {t('lab_report_page_subtitle')}
       </p>
 
       {/* ── 2 Column Layout ── */}
@@ -224,10 +221,10 @@ Return ONLY valid JSON in this exact format:
         {/* ── Left Column: Inputs ── */}
         <div className="bg-white border border-[#f5e3df] rounded-[24px] p-8 shadow-sm">
           <h2 className="font-heading text-[17px] font-bold text-text mb-1">
-            Enter your values
+            {t('lab_report_enter_values')}
           </h2>
           <p className="text-[13px] text-text/50 mb-6">
-            Type them in, or upload a photo of your report and Sakhi will read them for you.
+            {t('lab_report_enter_desc')}
           </p>
 
           {/* ── Photo upload area ── */}
@@ -256,7 +253,7 @@ Return ONLY valid JSON in this exact format:
               {extracting ? (
                 <>
                   <span className="w-4 h-4 border-2 border-[#8a5a52]/30 border-t-[#8a5a52] rounded-full animate-spin flex-shrink-0" />
-                  Reading your report…
+                  {t('lab_report_reading_status')}
                 </>
               ) : (
                 <>
@@ -266,7 +263,7 @@ Return ONLY valid JSON in this exact format:
                     <polyline points="17 8 12 3 7 8" />
                     <line x1="12" y1="3" x2="12" y2="15" />
                   </svg>
-                  Upload a photo of your lab report
+                  {t('lab_report_upload_btn')}
                 </>
               )}
             </button>
@@ -283,7 +280,7 @@ Return ONLY valid JSON in this exact format:
                 {uploadedStoragePath && (
                   <span className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px]
                                    px-2 py-0.5 rounded-full backdrop-blur-sm">
-                    ✓ Saved to storage
+                    ✓ {t('lab_report_saved_storage')}
                   </span>
                 )}
               </div>
@@ -301,14 +298,14 @@ Return ONLY valid JSON in this exact format:
             {/* Success hint when values were extracted */}
             {!extractError && !extracting && photoSource === 'photo' && hasAnyValue && (
               <p className="mt-2.5 text-[12.5px] text-secondary font-medium">
-                ✓ Values extracted — check them below and edit if needed before explaining.
+                ✓ {t('lab_report_extract_success')}
               </p>
             )}
           </div>
 
           {/* ── Manual value fields ── */}
           <div className="space-y-6 mb-8">
-            {LAB_FIELDS.map((field) => (
+            {getLabFields(t).map((field) => (
               <div key={field.key}>
                 <label className="block text-[14px] text-text/80 font-medium mb-2">
                   {field.label}
@@ -316,7 +313,7 @@ Return ONLY valid JSON in this exact format:
                   {photoSource === 'photo' && values[field.key] !== '' && (
                     <span className="ml-2 text-[10px] font-semibold text-secondary
                                      bg-secondary/10 px-1.5 py-0.5 rounded-full">
-                      from photo
+                      {t('lab_report_from_photo')}
                     </span>
                   )}
                 </label>
@@ -348,14 +345,14 @@ Return ONLY valid JSON in this exact format:
                          hover:bg-[#4a2638] transition-colors
                          disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
-              {analyzing ? 'Analyzing…' : 'Explain my report'}
+              {analyzing ? t('lab_report_analyzing_btn') : t('lab_report_explain_btn')}
             </button>
           </div>
 
           <p className="text-[12px] text-text/40 leading-relaxed">
             {photoSource === 'photo'
-              ? 'Values were extracted from your photo. Edit any field before explaining.'
-              : 'Type in whatever values you have — even one works.'}
+              ? t('lab_report_photo_hint')
+              : t('lab_report_type_hint')}
           </p>
         </div>
 
@@ -363,26 +360,26 @@ Return ONLY valid JSON in this exact format:
         <div>
           <div className="bg-white border border-[#f5e3df] rounded-[24px] p-8 shadow-sm h-full">
             <h2 className="font-heading text-[17px] font-bold text-text mb-4">
-              What it means
+              {t('lab_report_what_it_means')}
             </h2>
 
             {!explanation && !analyzing && !extracting && (
               <p className="text-[14.5px] text-text/60">
-                Fill in whatever you have — even one value works — and Sakhi will explain it.
+                {t('lab_report_fill_prompt')}
               </p>
             )}
 
             {extracting && (
               <div className="flex items-center gap-3 text-primary mb-4">
                 <span className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin flex-shrink-0" />
-                <p className="text-[14.5px] font-medium">Reading your report…</p>
+                <p className="text-[14.5px] font-medium">{t('lab_report_reading_status')}</p>
               </div>
             )}
 
             {analyzing && (
               <div className="flex items-center gap-3 text-primary">
                 <span className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin flex-shrink-0" />
-                <p className="text-[14.5px] font-medium">Generating your explanation…</p>
+                <p className="text-[14.5px] font-medium">{t('lab_report_generating')}</p>
               </div>
             )}
 
@@ -391,12 +388,12 @@ Return ONLY valid JSON in this exact format:
               <div className="mb-4 flex items-center gap-2 bg-warning/10 border border-warning/25
                               text-warning rounded-xl px-4 py-3 text-[13px] font-medium">
                 <span>⚠️</span>
-                <span>Could not reach the AI right now — showing a general response. Try again in a moment.</span>
+                <span>{t('lab_report_ai_error')}</span>
                 <button
                   onClick={handleAnalyze}
                   className="ml-auto underline hover:no-underline text-warning/80 cursor-pointer"
                 >
-                  Retry
+                  {t('lab_report_retry')}
                 </button>
               </div>
             )}
@@ -409,7 +406,7 @@ Return ONLY valid JSON in this exact format:
 
                 {doctorQuestions.length > 0 && (
                   <>
-                    <h3 className="text-[14px] font-bold text-text mb-3">Questions for your doctor:</h3>
+                    <h3 className="text-[14px] font-bold text-text mb-3">{t('lab_report_doctor_questions')}</h3>
                     <ul className="space-y-2">
                       {doctorQuestions.map((q, i) => (
                         <li key={i} className="text-[14px] text-text/75 flex items-start gap-2">
@@ -430,15 +427,14 @@ Return ONLY valid JSON in this exact format:
       {/* ── Disclaimer Box ── */}
       <div className="bg-[#fcf5eb] border border-[#f5e3c3] rounded-[16px] p-5 mb-16">
         <p className="text-[14px] text-text/70">
-          Educational only. Reference ranges differ between labs, and no single value confirms or
-          rules out PCOS. Always read your report together with your doctor.
+          {t('lab_report_disclaimer_box')}
         </p>
       </div>
 
       {/* ── Footer ── */}
       <footer className="border-t border-text/5 pt-6 pb-4">
         <p className="text-[11px] text-text/40">
-          Sakhi is a screening and support tool. It does not diagnose PCOS or replace a doctor.
+          {t('lab_report_footer')}
         </p>
       </footer>
 
