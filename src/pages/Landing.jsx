@@ -1,6 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../lib/AuthContext';
+import { supabase } from '../lib/supabaseClient';
 
 /* ── Video sources served from public/video/ ── */
 const VIDEOS = {
@@ -84,8 +86,100 @@ function VideoExplainer({ t }) {
   );
 }
 
+function ScreeningModal({ isOpen, onClose, onConfirm }) {
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isOpen) onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div 
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-text/40 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <div 
+        className="bg-white/95 rounded-[var(--radius-card)] p-6 sm:p-8 max-w-sm w-full shadow-lg border border-primary/20 transform transition-all"
+        onClick={e => e.stopPropagation()}
+      >
+        <h3 className="font-heading text-lg font-bold text-text mb-3">
+          Already Screened
+        </h3>
+        <p className="text-sm text-text/70 mb-6 leading-relaxed">
+          You've already completed your screening. Would you like to take it again?
+        </p>
+        <div className="flex justify-end gap-3">
+          <button 
+            onClick={onClose}
+            className="px-4 py-2 rounded-[var(--radius-button)] text-sm font-medium text-text/60 hover:bg-text/5 transition-colors cursor-pointer"
+          >
+            No, cancel
+          </button>
+          <button 
+            onClick={onConfirm}
+            className="px-4 py-2 rounded-[var(--radius-button)] bg-primary text-white text-sm font-medium hover:bg-primary/85 transition-colors shadow-sm cursor-pointer"
+          >
+            Yes, take again
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Landing() {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleScreeningClick = async (e) => {
+    e.preventDefault();
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data: profile } = await supabase
+        .from('users')
+        .select('id')
+        .eq('auth_id', user.id)
+        .maybeSingle();
+      
+      if (profile) {
+        const { data: existingEntry } = await supabase
+          .from('risk_scores')
+          .select('id')
+          .eq('user_id', profile.id)
+          .maybeSingle();
+        
+        if (existingEntry) {
+          setShowModal(true);
+          setLoading(false);
+          return;
+        }
+      }
+      
+      navigate('/screening');
+    } catch (err) {
+      console.error(err);
+      navigate('/screening');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConfirmRetake = () => {
+    setShowModal(false);
+    navigate('/screening?retake=1');
+  };
 
   return (
     <div className="font-body">
@@ -113,13 +207,14 @@ export default function Landing() {
 
             {/* CTAs */}
             <div className="flex flex-wrap items-center gap-3 mb-4">
-              <Link
-                to="/onboarding"
+              <button
+                onClick={handleScreeningClick}
+                disabled={loading}
                 className="px-6 py-3 rounded-[var(--radius-button)] bg-text text-white text-sm font-semibold
-                           hover:bg-text/85 active:scale-[0.97] transition-all duration-200 shadow-md"
+                           hover:bg-text/85 active:scale-[0.97] transition-all duration-200 shadow-md disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
               >
                 {t('landing_cta_screening')}
-              </Link>
+              </button>
               <Link
                 to="/family-explainer"
                 className="px-6 py-3 rounded-[var(--radius-button)] border-2 border-text/15 text-text text-sm font-semibold
@@ -225,7 +320,6 @@ export default function Landing() {
          ══════════════════════════════════════════════════════════ */}
       <VideoExplainer t={t} />
 
-
       {/* ══════════════════════════════════════════════════════════
           BRANDED FOOTER
          ══════════════════════════════════════════════════════════ */}
@@ -249,6 +343,14 @@ export default function Landing() {
           </div>
         </div>
       </footer>
+
+      {/* Screening Modal */}
+      <ScreeningModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onConfirm={handleConfirmRetake}
+      />
     </div>
   );
 }
+

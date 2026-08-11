@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../lib/AuthContext';
 
@@ -30,9 +30,9 @@ export const useSetup = () => useContext(SetupContext);
 export default function ProtectedRoute({ children }) {
   const { user, loading: authLoading } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const [checking, setChecking] = useState(true);
-  const [redirect, setRedirect] = useState(null);   // null | '/onboarding' | '/screening'
   const [isFullySetUp, setIsFullySetUp] = useState(false);
 
   useEffect(() => {
@@ -41,11 +41,10 @@ export default function ProtectedRoute({ children }) {
 
     // Reset state when path changes in case component is not unmounted
     setChecking(true);
-    setRedirect(null);
 
     // No session → send to login
     if (!user) {
-      setRedirect('/login');
+      navigate('/login', { replace: true, state: { from: location } });
       setChecking(false);
       return;
     }
@@ -72,7 +71,7 @@ export default function ProtectedRoute({ children }) {
         if (!onboardingComplete) {
           // Allow /onboarding itself through to avoid a redirect loop
           if (location.pathname !== '/onboarding') {
-            setRedirect('/onboarding');
+            navigate('/onboarding', { replace: true });
           }
           setChecking(false);
           return;
@@ -95,7 +94,7 @@ export default function ProtectedRoute({ children }) {
           // Allow /screening and /onboarding through
           const allowedPaths = ['/onboarding', '/screening'];
           if (!allowedPaths.includes(location.pathname)) {
-            setRedirect('/screening');
+            navigate('/screening', { replace: true });
           }
           setChecking(false);
           return;
@@ -114,7 +113,7 @@ export default function ProtectedRoute({ children }) {
           location.pathname === '/onboarding' ||
           (location.pathname === '/screening' && !allowRetakeScreening)
         ) {
-          setRedirect('/dashboard');
+          navigate('/dashboard', { replace: true });
         }
       } catch (err) {
         console.error('ProtectedRoute: unexpected error', err);
@@ -124,7 +123,7 @@ export default function ProtectedRoute({ children }) {
     }
 
     runChecks();
-  }, [user, authLoading, location.pathname]);
+  }, [user, authLoading, location.pathname, navigate, location.search, location.state]);
 
   // ── Loading spinner ─────────────────────────────────────────────────
   if (authLoading || checking) {
@@ -133,11 +132,6 @@ export default function ProtectedRoute({ children }) {
         <span className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin block" />
       </div>
     );
-  }
-
-  // ── Redirects ───────────────────────────────────────────────────────
-  if (redirect) {
-    return <Navigate to={redirect} replace state={{ from: location }} />;
   }
 
   // ── Render ──────────────────────────────────────────────────────────

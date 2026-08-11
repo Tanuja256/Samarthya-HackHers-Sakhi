@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../lib/AuthContext';
 import { useSetup } from './ProtectedRoute';
@@ -16,8 +16,9 @@ const featureLinks = [
 
 export default function Navbar() {
   const { t, i18n } = useTranslation();
-  const { user, signOut } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   // useSetup reads from SetupContext; returns { isFullySetUp: false } when
@@ -76,6 +77,15 @@ export default function Navbar() {
 
           {/* ── Right side ── */}
           <div className="flex items-center gap-2">
+            {/* Dashboard Link */}
+            <button
+              onClick={() => navigate(user ? '/dashboard' : '/login')}
+              className="px-3 py-1.5 rounded-[var(--radius-button)] text-text/60
+                         text-sm font-medium hover:bg-text/5 hover:text-text transition-all cursor-pointer"
+            >
+              {t('nav_dashboard') || 'Dashboard'}
+            </button>
+
             {/* Language Toggle Pills */}
             <div className="flex items-center bg-text/5 rounded-full p-0.5 gap-0.5">
               <button
@@ -99,22 +109,24 @@ export default function Navbar() {
             </div>
 
             {/* Auth: Sign In or Log Out */}
-            {user ? (
-              <button
-                onClick={handleLogout}
-                className="hidden sm:inline-block px-3 py-1.5 rounded-[var(--radius-button)] border border-text/15 text-text/60
-                           text-xs font-medium hover:bg-text/5 hover:text-text transition-all cursor-pointer"
-              >
-                {t('nav_logout')}
-              </button>
-            ) : (
-              <Link
-                to="/login"
-                className="px-4 py-1.5 rounded-[var(--radius-button)] bg-primary text-white text-xs font-medium
-                           hover:bg-primary/85 transition-colors"
-              >
-                {t('nav_login')}
-              </Link>
+            {!loading && (
+              user ? (
+                <button
+                  onClick={handleLogout}
+                  className="hidden sm:inline-block px-3 py-1.5 rounded-[var(--radius-button)] border border-text/15 text-text/60
+                             text-xs font-medium hover:bg-text/5 hover:text-text transition-all cursor-pointer"
+                >
+                  {t('nav_logout')}
+                </button>
+              ) : (
+                <Link
+                  to="/login"
+                  className="px-4 py-1.5 rounded-[var(--radius-button)] bg-primary text-white text-xs font-medium
+                             hover:bg-primary/85 transition-colors"
+                >
+                  {t('nav_login')}
+                </Link>
+              )
             )}
 
             {/* Mobile hamburger — only meaningful when fully set up */}
