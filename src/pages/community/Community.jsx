@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../lib/AuthContext';
 import { supabase } from '../../lib/supabaseClient';
+import BackButton from '../../components/BackButton';
 
 /* ── Seed posts — shown when Supabase returns nothing / not configured ── */
 const SEED_POSTS = [
@@ -314,11 +315,14 @@ export default function Community() {
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-10">
       {/* Header */}
-      <div className="max-w-2xl">
-        <h1 className="font-heading text-2xl sm:text-3xl font-bold text-text mb-2">
-          {lang === 'mr' ? 'कम्युनिटी वॉल' : 'Community wall'}
-        </h1>
-        <p className="text-sm text-text/50 leading-relaxed">
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="font-heading text-2xl sm:text-3xl font-bold text-text">
+            {lang === 'mr' ? 'कम्युनिटी वॉल' : 'Community wall'}
+          </h1>
+          <BackButton />
+        </div>
+        <p className="max-w-2xl text-sm text-text/50 leading-relaxed">
           {lang === 'mr'
             ? 'नावे नाहीत, फोटो नाहीत, प्रोफाईल नाहीत. फक्त तुमचे शहर आणि वय, तुम्हाला शेअर करायचे असल्यास.'
             : 'No names, no photos, no profiles. Just your city and your age, if you want to share them.'}

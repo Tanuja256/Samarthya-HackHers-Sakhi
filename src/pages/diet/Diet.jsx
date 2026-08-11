@@ -4,6 +4,8 @@ import { callGemini } from '../../lib/callGemini';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../lib/AuthContext';
 
+import BackButton from '../../components/BackButton';
+
 /* ══════════════════════════════════════════════════════════════════
    STATIC DATA — Weekly Meal Plan
    ══════════════════════════════════════════════════════════════════ */
@@ -190,9 +192,12 @@ Give ONE short, practical, friendly tweak (1-2 lines max) to make this meal more
     <div className="max-w-5xl mx-auto px-6 py-10">
 
       {/* ── Page Header ── */}
-      <h1 className="font-heading text-3xl font-bold text-text mb-2">
-        Eating well, without a separate kitchen
-      </h1>
+      <div className="flex items-center justify-between mb-2">
+        <h1 className="font-heading text-3xl font-bold text-text">
+          Eating well, without a separate kitchen
+        </h1>
+        <BackButton />
+      </div>
       <p className="text-[15px] text-text/60 mb-10">
         You don't need special food. You need the same home food, arranged a little differently.
       </p>

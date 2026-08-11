@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import BackButton from '../../components/BackButton';
+
 /* ══════════════════════════════════════════════════════════════════
    FESTIVAL DATA — Pre-written guidance for Maharashtrian festivals
    Non-restrictive tone: portioning/timing tips, never "avoid this"
@@ -126,9 +128,12 @@ export default function Festival() {
     <div className="max-w-5xl mx-auto px-4 py-8 sm:py-10">
       
       {/* ── Page Header ── */}
-      <h1 className="font-heading text-3xl sm:text-4xl font-bold text-[#3d3238] mb-2">
-        Festival mode
-      </h1>
+      <div className="flex items-center justify-between mb-2">
+        <h1 className="font-heading text-3xl sm:text-4xl font-bold text-[#3d3238]">
+          Festival mode
+        </h1>
+        <BackButton />
+      </div>
       <p className="text-[15px] text-[#8e8486] mb-8">
         Festivals are not a test you can fail. Here's how to enjoy them and still feel good on the other side.
       </p>

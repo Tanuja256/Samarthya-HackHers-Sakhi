@@ -4,6 +4,8 @@ import { useAuth } from '../../lib/AuthContext';
 import { supabase } from '../../lib/supabaseClient';
 import { Link } from 'react-router-dom';
 
+import BackButton from '../../components/BackButton';
+
 /* ── Seed Data ── */
 const SEED_PHOTOS = [
   { id: 'seed-1', category: 'Jawline — week 1', taken_at: '2026-03-12T00:00:00Z', bg: 'bg-[#F9EBEF]', _seed: true },
@@ -401,9 +403,12 @@ export default function Timeline() {
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
       {/* Header */}
       <div className="max-w-2xl">
-        <h1 className="font-heading text-2xl sm:text-3xl font-bold text-text mb-2">
-          {lang === 'mr' ? 'खाजगी फोटो टाइमलाइन' : 'Private photo timeline'}
-        </h1>
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="font-heading text-2xl sm:text-3xl font-bold text-text">
+            {lang === 'mr' ? 'खाजगी फोटो टाइमलाइन' : 'Private photo timeline'}
+          </h1>
+          <BackButton />
+        </div>
         <p className="text-sm sm:text-[15px] text-text/50 leading-relaxed">
           {lang === 'mr'
             ? 'त्वचा आणि केस हळूहळू बदलतात. महिनाभरानंतर काढलेले फोटो ते दाखवतात जे आरसा कधीच दाखवणार नाही.'

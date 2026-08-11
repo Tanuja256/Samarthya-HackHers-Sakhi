@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+import BackButton from '../../components/BackButton';
 
 /* ── Static myth-vs-fact data — always-visible myth + fact, no flip ── */
 const CARDS = [
@@ -92,11 +93,14 @@ export default function Education() {
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-10">
       {/* Header */}
-      <div className="max-w-2xl">
-        <h1 className="font-heading text-2xl sm:text-3xl font-bold text-text mb-2">
-          {lang === 'mr' ? 'गैरसमज विरुद्ध सत्य' : 'Myth vs fact'}
-        </h1>
-        <p className="text-sm text-text/50 leading-relaxed">
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="font-heading text-2xl sm:text-3xl font-bold text-text">
+            {lang === 'mr' ? 'गैरसमज विरुद्ध सत्य' : 'Myth vs fact'}
+          </h1>
+          <BackButton />
+        </div>
+        <p className="max-w-2xl text-sm text-text/50 leading-relaxed">
           {lang === 'mr'
             ? "PCOS बद्दल तुम्ही जे ऐकलं ते कधीही वाचलं नाही अशा कोणापासून आलं. चला ते बरोबर करूया."
             : "Most of what you've heard about PCOS came from someone who never read about it. Let's fix that."}

@@ -8,6 +8,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../lib/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { trackerTranslations } from './translations';
+import BackButton from '../../components/BackButton';
 
 /* ═══════════════════════════════════════════════════════════
    CONSTANTS
@@ -554,9 +555,12 @@ export default function Tracker() {
 
       {/* ── Page heading ── */}
       <div className="mb-6">
-        <h1 className="font-heading text-2xl sm:text-3xl font-bold text-text mb-1">
-          {tTracker('page_title')}
-        </h1>
+        <div className="flex items-center justify-between mb-1">
+          <h1 className="font-heading text-2xl sm:text-3xl font-bold text-text">
+            {tTracker('page_title')}
+          </h1>
+          <BackButton />
+        </div>
         <p className="text-sm text-text/50">
           {tTracker('page_subtitle')}
         </p>

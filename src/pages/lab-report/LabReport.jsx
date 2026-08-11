@@ -4,6 +4,7 @@ import { callGemini } from '../../lib/callGemini';
 import { extractLabValuesFromImage } from './callGeminiVision';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../lib/AuthContext';
+import BackButton from '../../components/BackButton';
 
 /* ── Field definitions ── */
 const LAB_FIELDS = [
@@ -207,9 +208,12 @@ Return ONLY valid JSON in this exact format:
     <div className="max-w-6xl mx-auto px-6 py-10">
 
       {/* ── Page Header ── */}
-      <h1 className="font-heading text-3xl font-bold text-text mb-2">
-        Lab report translator
-      </h1>
+      <div className="flex items-center justify-between mb-2">
+        <h1 className="font-heading text-3xl font-bold text-text">
+          Lab report translator
+        </h1>
+        <BackButton />
+      </div>
       <p className="text-[15px] text-text/60 mb-10">
         Your report is written for doctors. Here's the same thing, written for you.
       </p>
