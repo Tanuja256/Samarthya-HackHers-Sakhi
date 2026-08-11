@@ -402,14 +402,14 @@ export default function Timeline() {
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
       {/* Header */}
-      <div className="max-w-2xl">
+      <div className="mb-8">
         <div className="flex items-center justify-between mb-2">
           <h1 className="font-heading text-2xl sm:text-3xl font-bold text-text">
             {lang === 'mr' ? 'खाजगी फोटो टाइमलाइन' : 'Private photo timeline'}
           </h1>
           <BackButton />
         </div>
-        <p className="text-sm sm:text-[15px] text-text/50 leading-relaxed">
+        <p className="max-w-2xl text-sm sm:text-[15px] text-text/50 leading-relaxed">
           {lang === 'mr'
             ? 'त्वचा आणि केस हळूहळू बदलतात. महिनाभरानंतर काढलेले फोटो ते दाखवतात जे आरसा कधीच दाखवणार नाही.'
             : 'Skin and hair change slowly. Photos taken a month apart show what a mirror never will.'}
